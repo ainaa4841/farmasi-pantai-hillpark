@@ -52,7 +52,6 @@ elif choice == "Login":
             st.session_state.logged_in = True
             st.session_state.user_role = role
             st.session_state.user_email = username
-            st.experimental_rerun()
             st.rerun()
         else:
             st.error("Invalid credentials!")
@@ -104,6 +103,5 @@ elif choice == "Manage Schedule":
 elif choice == "Logout":
     st.session_state.logged_in = False
     st.session_state.user_role = ''
-    st.experimental_rerun()
     st.rerun()
 
