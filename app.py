@@ -34,11 +34,10 @@ if choice == "Register":
     full_name = st.text_input("Full Name")
     email = st.text_input("Email")
     phone = st.text_input("Phone Number")
-    referral_notes = st.text_area("Referral Notes")
 
     if st.button("Register"):
         register_user(username, password, "Customer")
-        save_customer([full_name, email, phone, referral_notes])
+        save_customer([full_name, email, phone])
         st.success("Registration successful! Please log in.")
 
 elif choice == "Login":
@@ -61,7 +60,7 @@ elif choice == "Book Appointment":
     name = st.text_input("Enter your name")
     appointment_type = st.selectbox("Appointment Type", ["First Time", "Follow Up", "Special"])
     date = st.date_input("Select Date")
-    time = st.selectbox("Select Time Slot", ["9:00AM", "11:00AM", "2:00PM", "4:00PM"])
+    time = st.selectbox("Select Time Slot", ["9:00AM-10:00AM", "11:00AM-12:00PM", "2:00PM-3:00PM", "4:00PM-5:00PM"])
 
     if st.button("Book Appointment"):
         save_appointment([name, appointment_type, str(date), time])
