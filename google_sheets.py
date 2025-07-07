@@ -1,4 +1,3 @@
-
 import gspread
 from google.oauth2.service_account import Credentials
 import json
@@ -34,7 +33,17 @@ def upload_to_drive(file_path):
 
 def get_appointments():
     worksheet = spreadsheet.worksheet("Appointments")
-    return worksheet.get_all_records()
+    records = worksheet.get_all_records()
+    appointments = []
+    for record in records:
+        appointments.append({
+            "Name": record.get("Name"),
+            "Appointment Type": record.get("Appointment Type"),
+            "Date": record.get("Date"),
+            "Time": record.get("Time"),
+            "Status": record.get("Status")
+        })
+    return appointments
 
 def get_pharmacist_schedule():
     worksheet = spreadsheet.worksheet("Schedules")
