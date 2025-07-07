@@ -73,9 +73,9 @@ elif choice == "Book Appointment":
     uploaded_file = st.file_uploader("Upload Referral Letter")
 
     if st.button("Book Appointment"):
-    if not name or not uploaded_file:
+      if not name or not uploaded_file:
         st.error("Please provide your name and upload a referral letter.")
-    else:
+      else:
         if not os.path.exists("uploads"):
             os.makedirs("uploads")
 
@@ -87,7 +87,7 @@ elif choice == "Book Appointment":
         save_file_metadata([name, uploaded_file.name, file_id])
         save_appointment([name, appointment_type, str(date), time, "Pending Confirmation"])
         st.success(f"Appointment booked for {name} on {date} at {time}. Status: Pending Confirmation.")
-          
+
 
 elif choice == "Upload File":
     st.subheader("Upload Additional Referral Letter")
