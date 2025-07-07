@@ -62,6 +62,7 @@ elif choice == "Login":
             st.rerun()
         else:
             st.error("Invalid credentials!")
+        
 
 elif choice == "Book Appointment":
     st.subheader("Book an Appointment")
@@ -72,16 +73,21 @@ elif choice == "Book Appointment":
     uploaded_file = st.file_uploader("Upload Referral Letter")
 
     if st.button("Book Appointment"):
-        if not name or not uploaded_file:
-            st.error("Please provide your name and upload a referral letter.")
-        else:
-            file_path = f"uploads/{uploaded_file.name}"
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            file_id = upload_to_drive(file_path)
-            save_file_metadata([name, uploaded_file.name, file_id])
-            save_appointment([name, appointment_type, str(date), time, "Pending Confirmation"])
-            st.success(f"Appointment booked for {name} on {date} at {time}. Status: Pending Confirmation.")
+    if not name or not uploaded_file:
+        st.error("Please provide your name and upload a referral letter.")
+    else:
+        if not os.path.exists("uploads"):
+            os.makedirs("uploads")
+
+        file_path = f"uploads/{uploaded_file.name}"
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        file_id = upload_to_drive(file_path)
+        save_file_metadata([name, uploaded_file.name, file_id])
+        save_appointment([name, appointment_type, str(date), time, "Pending Confirmation"])
+        st.success(f"Appointment booked for {name} on {date} at {time}. Status: Pending Confirmation.")
+          
 
 elif choice == "Upload File":
     st.subheader("Upload Additional Referral Letter")
