@@ -14,11 +14,14 @@ spreadsheet = client.open_by_key(st.secrets["SPREADSHEET_ID"])
 
 def save_customer(data):
     worksheet = spreadsheet.worksheet("Customers")
-    worksheet.append_row(data)
+    customer_id = generate_next_id("Customers", "customerID")
+    worksheet.append_row([customer_id] + data)
+    return customer_id
 
 def save_appointment(data):
     worksheet = spreadsheet.worksheet("Appointments")
-    worksheet.append_row(data)
+    appointment_id = generate_next_id("Appointments", "appointmentID")
+    worksheet.append_row([appointment_id] + data)
 
 def save_file_metadata(data):
     worksheet = spreadsheet.worksheet("Files")
@@ -65,4 +68,19 @@ def update_appointment_status(name, date, time, new_status, new_date=None, new_t
             elif new_status == "Cancelled":
                 worksheet.update(f"E{idx}", "Cancelled")
             break
+
+def generate_next_id(sheet_name, id_column):
+    worksheet = spreadsheet.worksheet(sheet_name)
+    records = worksheet.get_all_records()
+    if not records:
+        return 1
+    last_id = records[-1][id_column]
+    return int(last_id) + 1
+
+def save_report(data):
+    worksheet = spreadsheet.worksheet("Reports")
+    report_id = generate_next_id("Reports", "reportID")
+    worksheet.append_row([report_id] + data)
+
+
 
