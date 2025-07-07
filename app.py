@@ -89,21 +89,6 @@ elif choice == "Book Appointment":
         st.success(f"Appointment booked for {name} on {date} at {time}. Status: Pending Confirmation.")
 
 
-elif choice == "Upload File":
-    st.subheader("Upload Additional Referral Letter")
-    name = st.text_input("Enter your name")
-    uploaded_file = st.file_uploader("Choose a file")
-
-    if uploaded_file is not None:
-        if not os.path.exists("uploads"):
-            os.makedirs("uploads")
-        file_path = f"uploads/{uploaded_file.name}"
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        file_id = upload_to_drive(file_path)
-        save_file_metadata([name, uploaded_file.name, file_id])
-        st.success(f"File {uploaded_file.name} uploaded successfully!")
-
 elif choice == "My Appointments":
     st.subheader("My Appointments")
     appointments = get_appointments()
