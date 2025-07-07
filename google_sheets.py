@@ -52,3 +52,17 @@ def get_pharmacist_schedule():
 def update_schedule():
     worksheet = spreadsheet.worksheet("Schedules")
     worksheet.append_row(["New Slot", "9:00AM", "Available"])
+
+def update_appointment_status(name, date, time, new_status, new_date=None, new_time=None):
+    worksheet = spreadsheet.worksheet("Appointments")
+    records = worksheet.get_all_records()
+    for idx, record in enumerate(records, start=2):  # Row index starts from 2 because of headers
+        if record['Name'] == name and record['Date'] == date and record['Time'] == time:
+            if new_status == "Rescheduled":
+                worksheet.update(f"C{idx}", new_date)  # Update Date
+                worksheet.update(f"D{idx}", new_time)  # Update Time
+                worksheet.update(f"E{idx}", "Pending Confirmation")
+            elif new_status == "Cancelled":
+                worksheet.update(f"E{idx}", "Cancelled")
+            break
+
