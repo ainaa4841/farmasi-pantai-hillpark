@@ -21,9 +21,9 @@ if 'logged_in' not in st.session_state:
 menu = ["Login", "Register"]
 if st.session_state.logged_in:
     if st.session_state.user_role == 'Customer':
-        menu = ["Book Appointment", "Upload File", "My Appointments", "Logout"]
+        menu = ["Book Appointment", "My Appointments", "Logout"]
     elif st.session_state.user_role == 'Pharmacist':
-        menu = ["Pharmacist Dashboard", "Manage Schedule", "Logout"]
+        menu = [ "Manage Schedule", "Logout"]
 
 choice = st.sidebar.selectbox("Menu", menu)
 
