@@ -36,16 +36,16 @@ if choice == "Register":
     phone = st.text_input("Phone Number")
 
     if st.button("Register"):
-        if not username or not password or not full_name or not email or not phone:
-            st.error("Please fill in all required fields.")
-        elif not check_password_complexity(password):
-            st.error("Password must be at least 8 characters and contain a special character.")
-        elif check_email_exists(email):
-            st.error("Email already exists. Please use a different email or login.")
-        else:
-            register_user(username, password, "Customer", email)
-            save_customer([full_name, email, phone])
-            st.success("Registration successful! Please log in.")
+      if not username or not password or not full_name or not email or not phone:
+        st.error("Please fill in all required fields.")
+      elif not check_password_complexity(password):
+        st.error("Password must be at least 8 characters and contain a special character.")
+      elif check_email_exists(email):
+        st.error("Email already exists. Please use a different email or login.")
+      else:
+        register_user(username, password, "Customer", email)
+        customer_id = save_customer([username, password, full_name, email, phone, ""])
+        st.success(f"Registration successful! Your customer ID is {customer_id}. Please log in.")
 
 elif choice == "Login":
     st.subheader("Login")
@@ -97,15 +97,25 @@ elif choice == "My Appointments":
     if not my_appointments:
         st.info("No appointments found.")
     else:
-        for appt in my_appointments:
+        for idx, appt in enumerate(my_appointments):
             st.write(f"Date: {appt['Date']}, Time: {appt['Time']}, Status: {appt['Status']}")
-            if appt['Status'] == 'Pending Confirmation':
-                if st.button(f"Reschedule {appt['Date']} {appt['Time']}"):
-                    new_date = st.date_input("Select new date")
-                    new_time = st.selectbox("Select new time", ["9:00AM", "11:00AM", "2:00PM", "4:00PM"])
-                    st.write(f"Appointment rescheduled to {new_date} at {new_time} (Pending Confirmation)")
-                if st.button(f"Cancel {appt['Date']} {appt['Time']}"):
-                    st.write("Appointment cancelled.")
+
+            reschedule_button = st.button(f"Reschedule {appt['Date']} {appt['Time']}", key=f"reschedule_{idx}")
+            cancel_button = st.button(f"Cancel {appt['Date']} {appt['Time']}", key=f"cancel_{idx}")
+
+            if reschedule_button:
+                new_date = st.date_input(f"Select new date for {appt['Date']} {appt['Time']}", key=f"new_date_{idx}")
+                new_time = st.selectbox(f"Select new time for {appt['Date']} {appt['Time']}",
+                                        ["9:00AM", "11:00AM", "2:00PM", "4:00PM"], key=f"new_time_{idx}")
+                if st.button(f"Confirm Reschedule {appt['Date']} {appt['Time']}", key=f"confirm_{idx}"):
+                    update_appointment_status(appt['Name'], appt['Date'], appt['Time'], "Rescheduled", str(new_date), new_time)
+                    st.success(f"Appointment rescheduled to {new_date} at {new_time}. Status: Pending Confirmation.")
+                    st.rerun()
+
+            if cancel_button:
+                update_appointment_status(appt['Name'], appt['Date'], appt['Time'], "Cancelled")
+                st.success("Appointment cancelled successfully!")
+                st.rerun()
 
 elif choice == "Pharmacist Dashboard":
     st.subheader("Pharmacist Dashboard (Coming Soon)")
