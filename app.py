@@ -1,3 +1,4 @@
+
 import streamlit as st
 from auth import register_user, login_user, check_email_exists, check_password_complexity
 from google_sheets import (save_customer, save_appointment, save_file_metadata,
@@ -14,6 +15,7 @@ st.title("Farmasi Pantai Hillpark Appointment System")
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user_role = ''
+    st.session_state.user_username = ''
     st.session_state.user_email = ''
 
 menu = ["Login", "Register"]
@@ -47,15 +49,16 @@ if choice == "Register":
 
 elif choice == "Login":
     st.subheader("Login")
-    username = st.text_input("Username or Email")
+    username_or_email = st.text_input("Username or Email")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        role = login_user(username, password)
+        role, username, email = login_user(username_or_email, password)
         if role:
             st.session_state.logged_in = True
             st.session_state.user_role = role
-            st.session_state.user_email = username
+            st.session_state.user_username = username
+            st.session_state.user_email = email
             st.rerun()
         else:
             st.error("Invalid credentials!")
@@ -98,7 +101,7 @@ elif choice == "Upload File":
 elif choice == "My Appointments":
     st.subheader("My Appointments")
     appointments = get_appointments()
-    my_appointments = [appt for appt in appointments if appt['Name'] == st.session_state.user_email]
+    my_appointments = [appt for appt in appointments if appt['Name'] == st.session_state.user_username]
 
     if not my_appointments:
         st.info("No appointments found.")
