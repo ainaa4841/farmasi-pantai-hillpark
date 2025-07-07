@@ -1,3 +1,4 @@
+
 import gspread
 from google.oauth2.service_account import Credentials
 import json
@@ -14,13 +15,13 @@ def register_user(username, password, role, email):
     worksheet = spreadsheet.worksheet("Users")
     worksheet.append_row([username, password, role, email])
 
-def login_user(username, password):
+def login_user(username_or_email, password):
     worksheet = spreadsheet.worksheet("Users")
     users = worksheet.get_all_records()
     for user in users:
-        if (user['Username'] == username or user['Email'] == username) and user['Password'] == password:
-            return user['Role']
-    return None
+        if (user['Username'] == username_or_email or user['Email'] == username_or_email) and user['Password'] == password:
+            return user['Role'], user['Username'], user['Email']
+    return None, None, None
 
 def check_email_exists(email):
     worksheet = spreadsheet.worksheet("Users")
@@ -31,6 +32,6 @@ def check_email_exists(email):
     return False
 
 def check_password_complexity(password):
-    if len(password) < 8 or not re.search(r"[!@#$%^&*(),.?\\\":{}|<>]", password):
+    if len(password) < 8 or not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return False
     return True
