@@ -10,8 +10,6 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import pandas as pd
 
 st.set_page_config(page_title="Farmasi Pantai Hillpark", layout="wide")
-if "customer_id" not in st.session_state:
-    st.session_state.customer_id = None
 
 
 with open("css/style.css") as f:
