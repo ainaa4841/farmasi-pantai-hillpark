@@ -141,6 +141,7 @@ elif choice == "My Appointments":
             cols[1].write(f"🕒 **{appt['Time']}**")
             cols[2].write(f"📌 **{appt['Status']}**")
 
+            # RESCHEDULE BUTTON
             if cols[3].button("🔁 Reschedule", key=f"reschedule_{idx}"):
                 with st.form(f"reschedule_form_{idx}"):
                     st.subheader("Reschedule Appointment")
@@ -151,9 +152,7 @@ elif choice == "My Appointments":
                         s for s in available_schedule if (s['Date'], s['Time']) not in booked_slots
                     ]
 
-                    if not available_slots:
-                        st.warning("No available slots to reschedule.")
-                    else:
+                    if available_slots:
                         available_dates = sorted(set(slot["Date"] for slot in available_slots))
                         selected_date = st.selectbox("Select Date", available_dates)
 
@@ -172,10 +171,10 @@ elif choice == "My Appointments":
                             )
                             st.success("✅ Rescheduled successfully!")
                             st.rerun()
+                    else:
+                        st.warning("No available slots to reschedule.")
 
-                        else:
-                            st.warning("No available slots to reschedule.")
-
+            # CANCEL BUTTON
             if cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
                 update_appointment_status(
                     appointment_id=appt["appointmentID"],
@@ -190,17 +189,17 @@ elif choice == "My Appointments":
             st.markdown("---")
             st.markdown("### 📋 Past Appointments (Cancelled or Completed)")
 
-            # Header
             header = st.columns([2, 2, 2])
             header[0].markdown("**📅 Date**")
             header[1].markdown("**🕒 Time**")
             header[2].markdown("**📌 Status**")
 
             for appt in past_appts:
-                cols = st.columns([2, 2, 2])
-                cols[0].write(appt["Date"])
-                cols[1].write(appt["Time"])
-                cols[2].write(appt["Status"])
+                row = st.columns([2, 2, 2])
+                row[0].write(f"{appt['Date']}")
+                row[1].write(f"{appt['Time']}")
+                row[2].write(f"{appt['Status']}")
+
 
 # --------------------------------------------
 # Manage Schedule
