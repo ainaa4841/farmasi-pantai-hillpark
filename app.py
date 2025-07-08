@@ -190,7 +190,7 @@ elif choice == "Manage Schedule":
     # View all current booked appointments
     st.markdown("### 📋 Current Booked Appointments")
     appointments = get_appointments()
-    customers = {c['customerID']: c for c in get_all_customers()}  # You’ll need a new helper
+    customers = {c['customerID']: c for c in get_all_customers()}
 
     if not appointments:
         st.info("No appointments booked yet.")
@@ -198,9 +198,9 @@ elif choice == "Manage Schedule":
         for idx, appt in enumerate(appointments):
             cust = customers.get(str(appt['customerID']), {})
             st.write(f"**Appointment ID:** {appt['appointmentID']}")
-            st.write(f"**Customer:** {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
-            st.write(f"**Date:** {appt['Date']} | **Time:** {appt['Time']}")
-            st.write(f"**Current Status:** {appt['Status']}")
+            st.write(f"👤 **Customer:** {cust.get('Full Name', 'Unknown')} | 📧 Email: {cust.get('Email', 'N/A')} | 📱 Phone: {cust.get('Phone Number', 'N/A')}")
+            st.write(f"📅 **Date:** {appt['Date']} | 🕒 **Time:** {appt['Time']}")
+            st.write(f"📌 **Status:** {appt['Status']}")
 
             # Dropdown to change status
             new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"],
@@ -208,7 +208,7 @@ elif choice == "Manage Schedule":
                                       key=f"status_{idx}")
             if st.button("Update", key=f"update_{idx}"):
                 update_appointment_status(appt['appointmentID'], new_status)
-                st.success(f"Updated status for appointment {appt['appointmentID']} to {new_status}")
+                st.success(f"✅ Updated appointment {appt['appointmentID']} to {new_status}")
                 st.rerun()
 
             st.markdown("---")
@@ -222,26 +222,28 @@ elif choice == "Manage Schedule":
 
     if st.button("Add Slot"):
         if is_overlap:
-            st.warning(f"Slot {new_date} at {new_time} already exists.")
+            st.warning(f"⚠️ Slot {new_date} at {new_time} already exists.")
         else:
             update_schedule(str(new_date), new_time)
-            st.success(f"Slot {new_date} at {new_time} added.")
+            st.success(f"✅ Slot {new_date} at {new_time} added.")
             st.rerun()
 
+    # 📅 Display current availability in calendar-style layout
     from collections import defaultdict
 
-st.markdown("### 📅 Pharmacist Availability Calendar")
+    st.markdown("### 📅 Pharmacist Availability Calendar")
 
-if existing_schedule:
-    grouped = defaultdict(list)
-    for slot in existing_schedule:
-        grouped[slot["Date"]].append(slot["Time"])
+    if existing_schedule:
+        grouped = defaultdict(list)
+        for slot in existing_schedule:
+            grouped[slot["Date"]].append(slot["Time"])
 
-    for date, times in grouped.items():
-        st.markdown(f"**🗓 {date}**")
-        st.write("🕒 " + ", ".join(times))
-else:
-    st.info("No available schedule slots found.")
+        for date, times in grouped.items():
+            st.markdown(f"**🗓 {date}**")
+            st.write("🕒 " + ", ".join(sorted(times)))
+    else:
+        st.info("No available schedule slots found.")
+
 
 
 elif choice == "Logout":
