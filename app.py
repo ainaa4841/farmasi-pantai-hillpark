@@ -1,8 +1,10 @@
 
 import streamlit as st
 from auth import register_user, login_user, check_email_exists, check_password_complexity
-from google_sheets import (save_customer, save_appointment, save_file_metadata,
-                           upload_to_drive, get_appointments, get_pharmacist_schedule, update_schedule)
+from google_sheets import (
+    save_customer, save_appointment, save_file_metadata,
+    upload_to_drive, get_appointments, get_pharmacist_schedule,
+    update_schedule, update_appointment_status, get_all_customers)
 import os
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import pandas as pd
