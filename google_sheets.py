@@ -55,22 +55,32 @@ def get_pharmacist_schedule():
 def update_appointment_status(appointment_id, new_status, new_date=None, new_time=None):
     worksheet = spreadsheet.worksheet("Appointments")
     records = worksheet.get_all_records()
-    for idx, record in enumerate(records, start=2):
-        if str(record["appointmentID"]) == str(appointment_id):
+
+    for idx, record in enumerate(records, start=2):  # Start from row 2 due to headers
+        if str(record["appointmentID"]).strip() == str(appointment_id).strip():
+
+            current_date = str(record["Date"]).strip()
+            current_time = str(record["Time"]).strip()
+
             if new_status == "Cancelled":
-                worksheet.update(f"E{idx}", [[new_status]])  
-                restore_schedule_slot(record["Date"], record["Time"])
+                worksheet.update(f"E{idx}", [[new_status]])
+                restore_schedule_slot(current_date, current_time)
+
             elif new_status == "Rescheduled":
-                old_date = record["Date"]
-                old_time = record["Time"]
-                worksheet.update(f"C{idx}", [[new_date]])  
-                worksheet.update(f"D{idx}", [[new_time]])  
-                worksheet.update(f"E{idx}", [["Pending Confirmation"]]) 
-                restore_schedule_slot(record["Date"], record["Time"])
-                remove_schedule_slot(new_date, new_time)
+                # Ensure new slot is not None
+                if new_date and new_time:
+                    worksheet.update(f"C{idx}", [[new_date]])
+                    worksheet.update(f"D{idx}", [[new_time]])
+                    worksheet.update(f"E{idx}", [["Pending Confirmation"]])
+
+                    # Restore old slot and remove new one
+                    restore_schedule_slot(current_date, current_time)
+                    remove_schedule_slot(new_date, new_time)
+
             else:
-                worksheet.update(f"E{idx}", [[new_status]])  
-            break
+                worksheet.update(f"E{idx}", [[new_status]])
+
+            break  # exit loop once matched
 
 def get_all_customers():
     return spreadsheet.worksheet("Customers").get_all_records()
