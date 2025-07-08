@@ -169,31 +169,6 @@ elif choice == "Manage Schedule":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # ----------------------
-        # Section 2: Cancelled & Completed
-        st.markdown("### 📋 Cancelled & Completed Appointments (Read-only)")
-        for appt in inactive_appointments:
-            cust = customers.get(str(appt["customerID"]), {})
-            full_name = cust.get("Full Name", "Unknown")
-            email = cust.get("Email", "N/A")
-            phone = cust.get("Phone Number", "N/A")
-            referral_link = appt.get("appointmentReferralLetter", "")
-
-            st.markdown(f"""
-                <div style="border: 1px solid #eee; padding: 10px; border-radius: 6px; margin-bottom: 10px; background-color: #f2f2f2;">
-            """, unsafe_allow_html=True)
-
-            cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
-            cols[0].write(f"🆔 {appt['appointmentID']}")
-            cols[1].write(f"👤 {full_name}")
-            cols[2].write(f"📧 {email}\n📱 {phone}")
-            cols[3].write(f"📅 {appt['Date']}")
-            cols[4].write(f"🕒 {appt['Time']}")
-            cols[5].markdown(f"[📄 Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
-            cols[6].write(f"📌 {appt['Status']}")
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
         # --------------------
         # Section 2: Past Appointments
         past_appts = [appt for appt in appointments if appt["Status"] in ["Cancelled", "Completed"]]
