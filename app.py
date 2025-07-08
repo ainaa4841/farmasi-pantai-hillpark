@@ -173,15 +173,14 @@ elif choice == "My Appointments":
                         new_time=new_time
                     )
                     st.success("Appointment rescheduled! Status: Pending Confirmation.")
-                    st.experimental_rerun()
-
+                    st.rerun()
                 if st.button("❌ Cancel Appointment"):
                     update_appointment_status(
                         appointment_id=selected_appt["Appointment ID"],
                         new_status="Cancelled"
                     )
                     st.success("Appointment cancelled successfully.")
-                    st.experimental_rerun()
+                    st.rerun()
 
 
 
@@ -210,7 +209,7 @@ elif choice == "Manage Schedule":
             if st.button("Update", key=f"update_{idx}"):
                 update_appointment_status(appt['appointmentID'], new_status)
                 st.success(f"Updated status for appointment {appt['appointmentID']} to {new_status}")
-                st.experimental_rerun()
+                st.rerun()
 
             st.markdown("---")
 
@@ -227,7 +226,7 @@ elif choice == "Manage Schedule":
         else:
             update_schedule(str(new_date), new_time)
             st.success(f"Slot {new_date} at {new_time} added.")
-            st.experimental_rerun()
+            st.rerun()
 
     # Display current availability
     st.markdown("### 📅 Pharmacist Availability")
@@ -236,7 +235,6 @@ elif choice == "Manage Schedule":
             st.write(f"{slot['Date']} - {slot['Time']}")
     else:
         st.info("No available schedule slots found.")
-        st.experimental_rerun()
 
 elif choice == "Logout":
     st.session_state.logged_in = False
