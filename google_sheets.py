@@ -61,6 +61,8 @@ def update_appointment_status(appointment_id, new_status, new_date=None, new_tim
                 worksheet.update(f"E{idx}", [[new_status]])  
                 restore_schedule_slot(record["Date"], record["Time"])
             elif new_status == "Rescheduled":
+                old_date = record["Date"]
+                old_time = record["Time"]
                 worksheet.update(f"C{idx}", [[new_date]])  
                 worksheet.update(f"D{idx}", [[new_time]])  
                 worksheet.update(f"E{idx}", [["Pending Confirmation"]]) 
