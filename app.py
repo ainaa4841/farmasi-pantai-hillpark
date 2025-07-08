@@ -180,19 +180,19 @@ elif choice == "My Appointments":
                         ]
 
                         if available_slots:
-                            dates = sorted(set(s['Date'] for s in available_slots))
-                            new_date = st.selectbox("New Date", dates)
-                            new_times = [s['Time'] for s in available_slots if s['Date'] == new_date]
-                            new_time = st.selectbox("New Time", new_times)
+                            available_dates = sorted(set(slot["Date"] for slot in available_schedule))
+                            selected_date = st.selectbox("Select Date", available_dates)
+                            available_times = [slot["Time"] for slot in available_schedule if slot["Date"] == selected_date]
+                            selected_time = st.selectbox("Select Time Slot", available_times)
 
                             submitted = st.form_submit_button("Confirm Reschedule")
                             if submitted:
-                                update_appointment_status(
+                                save_appointment([
                                     appointment_id=appt["appointmentID"],
-                                    new_status="Rescheduled",
-                                    new_date=new_date,
-                                    new_time=new_time
-                                )
+                                    selected_date,
+                                    selected_time,
+                                    "Pending Confirmation"
+                                ])
                                 st.success("✅ Rescheduled successfully!")
                                 st.rerun()
                         else:
