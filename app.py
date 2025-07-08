@@ -182,6 +182,7 @@ elif choice == "Manage Schedule":
         cust = customers.get(str(appt["customerID"]), {})  # ✅ FIX
         st.write(f"**Appointment ID:** {appt['appointmentID']}")
         st.write(f"👤 Customer: {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
+        st.write(f"📅 Date: {appt['Date']} | 🕒 Time: {appt['Time']} | Status: {appt['Status']}")
         new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"], key=f"status_{idx}")
         if st.button("Update", key=f"update_{idx}"):
             update_appointment_status(appt["appointmentID"], new_status)
