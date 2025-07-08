@@ -56,17 +56,20 @@ def update_appointment_status(appointment_id, new_status, new_date=None, new_tim
     worksheet = spreadsheet.worksheet("Appointments")
     records = worksheet.get_all_records()
     for idx, record in enumerate(records, start=2):
-        if record["appointmentID"] == appointment_id:
+        if str(record["appointmentID"]) == str(appointment_id):  # ✅ Fix type check
             if new_status == "Cancelled":
                 worksheet.update(f"E{idx}", "Cancelled")
-                restore_schedule_slot(record["Date"], record["Time"])
+                restore_schedule_slot(record["Date"], record["Time"])  # ✅ Return old slot
             elif new_status == "Rescheduled":
                 worksheet.update(f"C{idx}", new_date)
                 worksheet.update(f"D{idx}", new_time)
                 worksheet.update(f"E{idx}", "Pending Confirmation")
-                restore_schedule_slot(record["Date"], record["Time"])  # Old slot
-                remove_schedule_slot(new_date, new_time)              # New slot
+                restore_schedule_slot(record["Date"], record["Time"])  # ✅ Restore old
+                remove_schedule_slot(new_date, new_time)              # ✅ Remove new
+            else:
+                worksheet.update(f"E{idx}", new_status)  # e.g., "Confirmed"
             break
+
 
 
 def get_all_customers():
@@ -81,10 +84,14 @@ def remove_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
     records = worksheet.get_all_records()
     for idx, record in enumerate(records, start=2):
-        if record["Date"] == date and record["Time"] == time:
+        if str(record["Date"]) == str(date) and str(record["Time"]) == str(time):
             worksheet.delete_rows(idx)
             break
 
 def restore_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
+    records = worksheet.get_all_records()
+    for record in records:
+        if str(record["Date"]) == str(date) and str(record["Time"]) == str(time):
+            return  # Already exists, don't add duplicate
     worksheet.append_row([date, time])
