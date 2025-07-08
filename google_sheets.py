@@ -88,6 +88,13 @@ def get_all_customers():
     worksheet = spreadsheet.worksheet("Customers")
     return worksheet.get_all_records()
 
+def update_customer_referral_letter(name, file_link):
+    worksheet = spreadsheet.worksheet("Customers")
+    records = worksheet.get_all_records()
+    for idx, record in enumerate(records, start=2):  # row 2 = first data row
+        if record['Full Name'] == name or record['customerUsername'] == name:
+            worksheet.update_acell(f"G{idx}", file_link)  # G column = Referral Letter
+            break
 
 
 
