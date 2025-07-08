@@ -228,13 +228,21 @@ elif choice == "Manage Schedule":
             st.success(f"Slot {new_date} at {new_time} added.")
             st.rerun()
 
-    # Display current availability
-    st.markdown("### 📅 Pharmacist Availability")
-    if existing_schedule:
-        for slot in existing_schedule:
-            st.write(f"{slot['Date']} - {slot['Time']}")
-    else:
-        st.info("No available schedule slots found.")
+    from collections import defaultdict
+
+st.markdown("### 📅 Pharmacist Availability Calendar")
+
+if existing_schedule:
+    grouped = defaultdict(list)
+    for slot in existing_schedule:
+        grouped[slot["Date"]].append(slot["Time"])
+
+    for date, times in grouped.items():
+        st.markdown(f"**🗓 {date}**")
+        st.write("🕒 " + ", ".join(times))
+else:
+    st.info("No available schedule slots found.")
+
 
 elif choice == "Logout":
     st.session_state.logged_in = False
