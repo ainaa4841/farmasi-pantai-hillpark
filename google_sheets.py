@@ -93,12 +93,17 @@ def save_report(data):
 def remove_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
     records = worksheet.get_all_records()
+    date = str(date).strip().lower()
+    time = str(time).strip().lower()
+
     for idx, record in enumerate(records, start=2):
         rec_date = str(record["Date"]).strip().lower()
         rec_time = str(record["Time"]).strip().lower()
-        if rec_date == str(date).strip().lower() and rec_time == str(time).strip().lower():
+        if rec_date == date and rec_time == time:
             worksheet.delete_rows(idx)
-            break
+            return
+    print(f"[DEBUG] Slot not found for deletion: {date} - {time}")
+
 
 def restore_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
