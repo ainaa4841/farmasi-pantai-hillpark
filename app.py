@@ -173,98 +173,65 @@ elif choice == "My Appointments":
 
 # --------------------------------------------
 # Manage Schedule
-elif choice == "Manage Schedule":
-    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
+st.subheader("📋 Pharmacist: Manage Appointments & Availability")
+appointments = get_appointments()
+customers = {str(c["customerID"]): c for c in get_all_customers()}
 
-    appointments = get_appointments()
-    customers = {str(c["customerID"]): c for c in get_all_customers()}
-
-    if not appointments:
-        st.info("No appointments found.")
-    else:
-        st.markdown("### Booked Appointments")
-
-        st.markdown("""
+if not appointments:
+    st.info("No appointments found.")
+else:
+    st.markdown("### Booked Appointments")
+    st.markdown("""
         <style>
-            table {
-                border-collapse: collapse;
-                width: 100%;
-                margin-bottom: 20px;
-            }
-            th, td {
-                border: 1px solid #ddd;
-                padding: 10px;
-                text-align: left;
-                vertical-align: middle;
-            }
-            th {
-                background-color: #f2f2f2;
-                font-weight: bold;
-            }
-            select, button {
-                padding: 4px 8px;
-                font-size: 14px;
-            }
+        .appt-row {
+            border-bottom: 1px solid #ccc;
+            padding: 8px 0;
+        }
+        .appt-header {
+            font-weight: bold;
+            border-bottom: 2px solid black;
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+        }
         </style>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-        # Table header
-        st.markdown("""
-        <table>
-            <thead>
-                <tr>
-                    <th>Appointment ID</th>
-                    <th>Customer Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-        """, unsafe_allow_html=True)
+    # Header row
+    header = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
+    header[0].markdown("<div class='appt-header'>ID</div>", unsafe_allow_html=True)
+    header[1].markdown("<div class='appt-header'>Name</div>", unsafe_allow_html=True)
+    header[2].markdown("<div class='appt-header'>Email</div>", unsafe_allow_html=True)
+    header[3].markdown("<div class='appt-header'>Phone</div>", unsafe_allow_html=True)
+    header[4].markdown("<div class='appt-header'>Date</div>", unsafe_allow_html=True)
+    header[5].markdown("<div class='appt-header'>Time</div>", unsafe_allow_html=True)
+    header[6].markdown("<div class='appt-header'>Status</div>", unsafe_allow_html=True)
+    header[7].markdown("<div class='appt-header'>Action</div>", unsafe_allow_html=True)
 
-        for idx, appt in enumerate(appointments):
-            cust = customers.get(str(appt["customerID"]), {})
-            full_name = cust.get("Full Name", "Unknown")
-            email = cust.get("Email", "N/A")
-            phone = cust.get("Phone Number", "N/A")
+    for idx, appt in enumerate(appointments):
+        cust = customers.get(str(appt["customerID"]), {})
+        full_name = cust.get("Full Name", "Unknown")
+        email = cust.get("Email", "N/A")
+        phone = cust.get("Phone Number", "N/A")
 
-            # Streamlit form to hold the dropdown + button in the table
-            with st.form(key=f"status_form_{idx}"):
-                col1, col2 = st.columns([3, 1])
-                new_status = col1.selectbox(
-                    "Select status",
-                    ["Pending Confirmation", "Confirmed", "Cancelled"],
-                    index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                    key=f"status_{idx}"
-                )
-                submit = col2.form_submit_button("Update")
+        cols = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
+        cols[0].write(appt["appointmentID"])
+        cols[1].write(full_name)
+        cols[2].write(email)
+        cols[3].write(phone)
+        cols[4].write(appt["Date"])
+        cols[5].write(appt["Time"])
 
-            # Render the row including current dropdown selection
-            row_html = f"""
-                <tr>
-                    <td>{appt["appointmentID"]}</td>
-                    <td>{full_name}</td>
-                    <td>{email}</td>
-                    <td>{phone}</td>
-                    <td>{appt["Date"]}</td>
-                    <td>{appt["Time"]}</td>
-                    <td>{new_status}</td>
-                    <td>{"✅ Updated" if submit else ""}</td>
-                </tr>
-            """
-            st.markdown(row_html, unsafe_allow_html=True)
+        new_status = cols[6].selectbox(
+            "Status",
+            ["Pending Confirmation", "Confirmed", "Cancelled"],
+            index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
+            key=f"status_{idx}"
+        )
 
-            # Handle update on submit
-            if submit:
-                update_appointment_status(appt["appointmentID"], new_status)
-                st.experimental_rerun()
-
-        # Close the table
-        st.markdown("</tbody></table>", unsafe_allow_html=True)
+        if cols[7].button("Update", key=f"update_{idx}"):
+            update_appointment_status(appt["appointmentID"], new_status)
+            st.success(f"Updated appointment {appt['appointmentID']}")
+            st.rerun()
 
 # --------------------------------------------
 # Update Slot Availability
