@@ -111,6 +111,8 @@ elif choice == "Book Appointment":
                 from google_sheets import update_customer_referral_letter
                 update_customer_referral_letter(st.session_state.user_username, file_link)
 
+                st.write("Booking for Customer ID:", st.session_state.customer_id)
+
                 save_appointment([
                     st.session_state.customer_id,
                     selected_date,
