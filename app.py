@@ -183,21 +183,31 @@ elif choice == "Manage Schedule":
         st.info("No appointments found.")
     else:
         st.markdown("### Booked Appointments")
+
         for idx, appt in enumerate(appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
 
-            # Show appointment info in a row layout
-            cols = st.columns([2, 3, 3, 2, 3, 2])
+            # Wrap appointment row in a bordered div
+            st.markdown(f"""
+                <div style="
+                    border: 1px solid #ccc;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
+
+            # Columns inside bordered box
+            cols = st.columns([2, 3, 3, 2, 2, 2])
             cols[0].write(f"🆔 **{appt['appointmentID']}**")
             cols[1].write(f"👤 **{full_name}**")
-            cols[2].write(f"📧 {email} / 📱 {phone}")
+            cols[2].write(f"📧 {email}<br>📱 {phone}", unsafe_allow_html=True)
             cols[3].write(f"📅 {appt['Date']}")
             cols[4].write(f"🕒 {appt['Time']}")
-            
-            # Dropdown for status update
+
             new_status = cols[5].selectbox(
                 "Status",
                 ["Pending Confirmation", "Confirmed", "Cancelled"],
@@ -205,11 +215,13 @@ elif choice == "Manage Schedule":
                 key=f"status_{idx}"
             )
 
-            # Confirm update button
             if st.button("Update", key=f"update_{idx}"):
                 update_appointment_status(appt["appointmentID"], new_status)
                 st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
                 st.rerun()
+
+            # End of bordered div
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------
 # Update Slot Availability
