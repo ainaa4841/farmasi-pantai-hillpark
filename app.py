@@ -119,7 +119,7 @@ elif choice == "Book Appointment":
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 
 # --------------------------------------------
-# My Appointments
+# Manage Schedule
 elif choice == "Manage Schedule":
     st.subheader("Pharmacist: Manage Appointments & Availability")
 
@@ -222,71 +222,14 @@ elif choice == "Manage Schedule":
                 cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
                 cols[0].write(f" {appt['appointmentID']}")
                 cols[1].write(f" {full_name}")
-                cols[2].write(f" {email}<br>{phone}")
-                cols[3].write(f" {appt['Date']}", unsafe_allow_html=True)
+                cols[2].write(f" {email}\n\n{phone}")
+                cols[3].write(f" {appt['Date']}")
                 cols[4].write(f" {appt['Time']}")
                 cols[5].markdown(f"[ Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
                 cols[6].write(f" {appt['Status']}")
 
 
-# --------------------------------------------
-# Manage Schedule
-elif choice == "Manage Schedule":
-    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
 
-    appointments = get_appointments()
-    customers = {str(c["customerID"]): c for c in get_all_customers()}
-
-    if not appointments:
-        st.info("No appointments found.")
-    else:
-        st.markdown("### Booked Appointments")
-
-        for idx, appt in enumerate(appointments):
-            cust = customers.get(str(appt["customerID"]), {})
-            full_name = cust.get("Full Name", "Unknown")
-            email = cust.get("Email", "N/A")
-            phone = cust.get("Phone Number", "N/A")
-            referral_link = appt.get("appointmentReferralLetter", "")
-
-            # Wrap appointment row in a bordered div
-            st.markdown(f"""
-                <div style="
-                    border: 0.5px solid #ccc;
-                    border-radius: 8px;
-                    padding: 1px;
-                    margin-bottom: 10px;
-                    background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
-
-            # Columns inside bordered box
-            cols = st.columns([1.2, 2.5, 2.5, 1.8, 1.8, 2, 2])
-            cols[0].write(f"🆔 **{appt['appointmentID']}**")
-            cols[1].write(f"👤 **{full_name}**")
-            cols[2].write(f"📧 {email}\n\n📱 {phone}")
-            cols[3].write(f"📅 {appt['Date']}")
-            cols[4].write(f"🕒 {appt['Time']}")
-
-            # Referral Letter Link
-            if referral_link:
-                cols[5].markdown(f"[📄 Referral Letter]({referral_link})", unsafe_allow_html=True)
-            else:
-                cols[5].write("No file")
-
-            new_status = cols[6].selectbox(
-                "Status",
-                ["Pending Confirmation", "Confirmed", "Cancelled"],
-                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                key=f"status_{idx}"
-            )
-
-            if st.button("Update", key=f"update_{idx}"):
-                update_appointment_status(appt["appointmentID"], new_status)
-                st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
-                st.rerun()
-
-            # End of bordered div
-            st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------
 # Update Slot Availability
