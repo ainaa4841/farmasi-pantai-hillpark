@@ -140,7 +140,7 @@ elif choice == "Manage Schedule":
                 <div style="
                     border: 1px solid #ccc;
                     border-radius: 3px;
-                    padding: 55px;
+                    padding: 1px;
                     margin-bottom: 10px;
                     background-color: #f9f9f9;">
             """, unsafe_allow_html=True)
