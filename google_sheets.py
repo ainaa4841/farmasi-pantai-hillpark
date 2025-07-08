@@ -13,7 +13,7 @@ scope = [
 
 service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 creds = Credentials.from_service_account_info(
-    st.secrets["GOOGLE_SERVICE_ACCOUNT"],  # ✅ pass dict directly
+    st.secrets["GOOGLE_SERVICE_ACCOUNT"],  #
     scopes=scope
 )
 
