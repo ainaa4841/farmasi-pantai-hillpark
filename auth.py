@@ -1,4 +1,3 @@
-
 import gspread
 from google.oauth2.service_account import Credentials
 import json
@@ -17,30 +16,21 @@ def register_user(username, password, role, email):
 
 def login_user(username_or_email, password):
     worksheet = spreadsheet.worksheet("Users")
-    users = worksheet.get_all_records()
-    for user in users:
-        if (user['Username'] == username_or_email or user['Email'] == username_or_email) and user['Password'] == password:
-            return user['Role'], user['Username'], user['Email']
+    for user in worksheet.get_all_records():
+        if (user["Username"] == username_or_email or user["Email"] == username_or_email) and user["Password"] == password:
+            return user["Role"], user["Username"], user["Email"]
     return None, None, None
-
-def check_email_exists(email):
-    worksheet = spreadsheet.worksheet("Users")
-    users = worksheet.get_all_records()
-    for user in users:
-        if user['Email'] == email:
-            return True
-    return False
 
 def get_customer_id(username):
     worksheet = spreadsheet.worksheet("Customers")
-    customers = worksheet.get_all_records()
-    for customer in customers:
-        if customer['customerUsername'] == username:
-            return str(customer['customerID'])  # ✅ important: cast to string
+    for record in worksheet.get_all_records():
+        if record["customerUsername"] == username:
+            return str(record["customerID"])
     return None
 
+def check_email_exists(email):
+    worksheet = spreadsheet.worksheet("Users")
+    return any(user["Email"] == email for user in worksheet.get_all_records())
 
 def check_password_complexity(password):
-    if len(password) < 8 or not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        return False
-    return True
+    return len(password) >= 8 and re.search(r"[!@#$%^&*(),.?\":{}|<>]", password)
