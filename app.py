@@ -109,7 +109,7 @@ elif choice == "Book Appointment":
                 update_customer_referral_letter(st.session_state.user_username, file_link)
 
                 save_appointment([
-                    st.session_state.customer_id,
+                    st.session_state.customerID,
                     selected_date,
                     selected_time,
                     "Pending Confirmation",
