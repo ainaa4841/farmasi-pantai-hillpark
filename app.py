@@ -138,65 +138,51 @@ elif choice == "My Appointments":
             cols[1].write(f"🕒 **{appt['Time']}**")
             cols[2].write(f"📌 **{appt['Status']}**")
 
+            # Allow rescheduling only if appointment is Cancelled
             if appt['Status'] == "Cancelled":
                 if cols[3].button("🔁 Reschedule", key=f"reschedule_{idx}"):
                     with st.form(f"reschedule_form_{idx}"):
                         st.subheader(f"Reschedule Cancelled Slot")
 
-                        schedule = get_pharmacist_schedule()
-                        booked = [(a['Date'], a['Time']) for a in get_appointments()]
-                        available_slots = [
-                            s for s in schedule if (s['Date'], s['Time']) not in booked
-                        ]
+                        available_schedule = get_pharmacist_schedule()
+                        available_dates = sorted(set(slot["Date"] for slot in available_schedule))
+                        selected_date = st.selectbox("Select Date", available_dates)
+                        available_times = [slot["Time"] for slot in available_schedule if slot["Date"] == selected_date]
+                        selected_time = st.selectbox("Select Time Slot", available_times)
 
-                        if available_slots:
-                            available_dates = sorted(set(slot["Date"] for slot in available_schedule))
-                            selected_date = st.selectbox("Select Date", available_dates)
-                            available_times = [slot["Time"] for slot in available_schedule if slot["Date"] == selected_date]
-                            selected_time = st.selectbox("Select Time Slot", available_times)
+                        submitted = st.form_submit_button("Confirm Reschedule")
+                        if submitted:
+                            update_appointment_status(
+                                appointment_id=appt["appointmentID"],
+                                new_status="Rescheduled",
+                                new_date=selected_date,
+                                new_time=selected_time
+                            )
+                            st.success("✅ Rescheduled successfully!")
+                            st.rerun()
 
-                            submitted = st.form_submit_button("Confirm Reschedule")
-                            if submitted:
-                                save_appointment([
-                                    appointment_id==appt["appointmentID"],
-                                    selected_date,
-                                    selected_time,
-                                    "Pending Confirmation"
-                                ])
-                                st.success("✅ Rescheduled successfully!")
-                                st.rerun()
-                        else:
-                            st.warning("No available slots to reschedule.")
-                cols[4].write("—")  # Hide Cancel button
+                cols[4].write("—")  # Hide cancel
             else:
                 if cols[3].button("🔁 Reschedule", key=f"reschedule_{idx}"):
                     with st.form(f"reschedule_form_active_{idx}"):
                         st.subheader(f"Reschedule Appointment")
 
-                        schedule = get_pharmacist_schedule()
-                        booked = [(a['Date'], a['Time']) for a in get_appointments()]
-                        available_slots = [
-                            s for s in schedule if (s['Date'], s['Time']) not in booked
-                        ]
+                        available_schedule = get_pharmacist_schedule()
+                        available_dates = sorted(set(slot["Date"] for slot in available_schedule))
+                        selected_date = st.selectbox("Select Date", available_dates)
+                        available_times = [slot["Time"] for slot in available_schedule if slot["Date"] == selected_date]
+                        selected_time = st.selectbox("Select Time Slot", available_times)
 
-                        if available_slots:
-                            available_dates = sorted(set(slot["Date"] for slot in available_schedule))
-                            selected_date = st.selectbox("Select Date", available_dates)
-                            available_times = [slot["Time"] for slot in available_schedule if slot["Date"] == selected_date]
-                            selected_time = st.selectbox("Select Time Slot", available_times)
-
-                            submitted = st.form_submit_button("Confirm Reschedule")
-                            if submitted:
-                                save_appointment([
-                                    appointment_id==appt["appointmentID"],
-                                    selected_date,
-                                    selected_time,
-                                    "Pending Confirmation"
-                                ])
-                                st.success("✅ Rescheduled successfully!")
-                                st.rerun()
-                        else:
-                            st.warning("No available slots to reschedule.")
+                        submitted = st.form_submit_button("Confirm Reschedule")
+                        if submitted:
+                            update_appointment_status(
+                                appointment_id=appt["appointmentID"],
+                                new_status="Rescheduled",
+                                new_date=selected_date,
+                                new_time=selected_time
+                            )
+                            st.success("✅ Rescheduled successfully!")
+                            st.rerun()
 
                 if cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
                     update_appointment_status(
