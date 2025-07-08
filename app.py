@@ -191,7 +191,7 @@ elif choice == "Manage Schedule":
             # Wrap appointment row in a bordered div
             st.markdown(f"""
                 <div style="
-                    border: 1px solid #ccc;
+                    border: 0.5px solid #ccc;
                     border-radius: 8px;
                     padding: 15px;
                     margin-bottom: 10px;
