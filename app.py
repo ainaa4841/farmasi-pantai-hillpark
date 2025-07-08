@@ -158,7 +158,7 @@ elif choice == "My Appointments":
                             submitted = st.form_submit_button("Confirm Reschedule")
                             if submitted:
                                 save_appointment([
-                                    appointment_id=appt["appointmentID"],
+                                    appointment_id==appt["appointmentID"],
                                     selected_date,
                                     selected_time,
                                     "Pending Confirmation"
