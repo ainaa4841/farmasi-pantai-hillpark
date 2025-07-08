@@ -3,29 +3,16 @@ from google.oauth2.service_account import Credentials
 import json
 import streamlit as st
 import os
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 
-scope = [
-    "https://spreadsheets.google.com/feeds",
-    "https://www.googleapis.com/auth/drive"
-]
-
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
-
-
 client = gspread.authorize(creds)
 spreadsheet = client.open_by_key(st.secrets["SPREADSHEET_ID"])
 
-# Google Drive setup
-drive_service = build("drive", "v3", credentials=creds)
-UPLOAD_FOLDER_ID = "1GMngst7ixf-OWTqeZAEzxoaUDptOJeyi"
-
 def generate_next_id(sheet, col_name):
     records = spreadsheet.worksheet(sheet).get_all_records()
-    if not records:
-        return 1
+    if not records: return 1
     return int(records[-1][col_name]) + 1
 
 def save_customer(data):
@@ -34,81 +21,89 @@ def save_customer(data):
     ws.append_row([cid] + data)
     return cid
 
-def upload_file_to_drive(local_path, filename):
-    file_metadata = {
-        "name": filename,
-        "parents": [UPLOAD_FOLDER_ID]
-    }
-    media = MediaFileUpload(local_path, resumable=True)
-    uploaded = drive_service.files().create(
-        body=file_metadata, media_body=media, fields="id"
-    ).execute()
-
-    file_id = uploaded.get("id")
-    if file_id:
-        drive_service.permissions().create(
-            fileId=file_id,
-            body={"role": "reader", "type": "anyone"},
-        ).execute()
-        return f"https://drive.google.com/uc?id={file_id}"
-    return ""
-
 def save_appointment(data, referral_path=None):
     worksheet = spreadsheet.worksheet("Appointments")
     appointment_id = generate_next_id("Appointments", "appointmentID")
-    row = [appointment_id] + data + [referral_path or ""]
-    worksheet.append_row(row)
-    remove_schedule_slot(data[1], data[2])
+    if referral_path is None:
+        referral_path = ""
+    worksheet.append_row([appointment_id] + data + [referral_path])  # Add referral path to appointment
+    remove_schedule_slot(data[1], data[2])  # data[1] = date, data[2] = time
+
+
+
+
+def save_file_metadata(data):
+    ws = spreadsheet.worksheet("Files")
+    ws.append_row(data)
+
+def update_customer_referral_letter(username, link):
+    ws = spreadsheet.worksheet("Customers")
+    records = ws.get_all_records()
+    for idx, row in enumerate(records, start=2):
+        if row["customerUsername"] == username:
+            ws.update_acell(f"G{idx}", link)
+            break
 
 def get_appointments():
-    return spreadsheet.worksheet("Appointments").get_all_records()
-
-def get_all_customers():
-    return spreadsheet.worksheet("Customers").get_all_records()
-
-def get_pharmacist_schedule():
-    return spreadsheet.worksheet("Schedules").get_all_records()
+    ws = spreadsheet.worksheet("Appointments")
+    return ws.get_all_records()
 
 def update_schedule(date, time):
     ws = spreadsheet.worksheet("Schedules")
     ws.append_row([date, time])
 
-def remove_schedule_slot(date, time):
-    ws = spreadsheet.worksheet("Schedules")
-    records = ws.get_all_records()
-    for idx, record in enumerate(records, start=2):
-        if str(record["Date"]).strip().lower() == str(date).strip().lower() and \
-           str(record["Time"]).strip().lower() == str(time).strip().lower():
-            ws.delete_rows(idx)
-            return
-
-def restore_schedule_slot(date, time):
-    ws = spreadsheet.worksheet("Schedules")
-    for record in ws.get_all_records():
-        if str(record["Date"]).strip().lower() == str(date).strip().lower() and \
-           str(record["Time"]).strip().lower() == str(time).strip().lower():
-            return
-    ws.append_row([date, time])
+def get_pharmacist_schedule():
+    return spreadsheet.worksheet("Schedules").get_all_records()
 
 def update_appointment_status(appointment_id, new_status, new_date=None, new_time=None):
-    ws = spreadsheet.worksheet("Appointments")
-    records = ws.get_all_records()
-    for idx, record in enumerate(records, start=2):
+    worksheet = spreadsheet.worksheet("Appointments")
+    records = worksheet.get_all_records()
+    for idx, record in enumerate(records, start=2):  # Row 2 = data starts
         if str(record["appointmentID"]) == str(appointment_id):
             if new_status == "Cancelled":
-                ws.update_acell(f"E{idx}", "Cancelled")
+                worksheet.update_acell(f"E{idx}", "Cancelled")
                 restore_schedule_slot(record["Date"], record["Time"])
             elif new_status == "Rescheduled":
-                ws.update_acell(f"C{idx}", new_date)
-                ws.update_acell(f"D{idx}", new_time)
-                ws.update_acell(f"E{idx}", "Pending Confirmation")
-                restore_schedule_slot(record["Date"], record["Time"])
+                old_date, old_time = record["Date"], record["Time"]
+                worksheet.update_acell(f"C{idx}", new_date)
+                worksheet.update_acell(f"D{idx}", new_time)
+                worksheet.update_acell(f"E{idx}", "Pending Confirmation")
+                restore_schedule_slot(old_date, old_time)
                 remove_schedule_slot(new_date, new_time)
             else:
-                ws.update_acell(f"E{idx}", new_status)
+                worksheet.update_acell(f"E{idx}", new_status)
             break
+
+
+def get_all_customers():
+    return spreadsheet.worksheet("Customers").get_all_records()
 
 def save_report(data):
     ws = spreadsheet.worksheet("Reports")
     rid = generate_next_id("Reports", "reportID")
     ws.append_row([rid] + data)
+
+def remove_schedule_slot(date, time):
+    worksheet = spreadsheet.worksheet("Schedules")
+    records = worksheet.get_all_records()
+    date = str(date).strip().lower()
+    time = str(time).strip().lower()
+
+    for idx, record in enumerate(records, start=2):
+        rec_date = str(record["Date"]).strip().lower()
+        rec_time = str(record["Time"]).strip().lower()
+        if rec_date == date and rec_time == time:
+            worksheet.delete_rows(idx)
+            return
+    print(f"[DEBUG] Slot not found for deletion: {date} - {time}")
+
+
+def restore_schedule_slot(date, time):
+    worksheet = spreadsheet.worksheet("Schedules")
+    records = worksheet.get_all_records()
+    for record in records:
+        rec_date = str(record["Date"]).strip().lower()
+        rec_time = str(record["Time"]).strip().lower()
+        if rec_date == str(date).strip().lower() and rec_time == str(time).strip().lower():
+            return  # already exists
+    worksheet.append_row([date, time])
