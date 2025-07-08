@@ -29,6 +29,10 @@ def save_appointment(data):
     # Remove booked slot from schedule
     remove_schedule_slot(data[1], data[2])  # data[1]=date, data[2]=time
 
+    [customer_id, selected_date, selected_time, "Pending Confirmation", referral_letter_path]
+
+
+
 def save_file_metadata(data):
     ws = spreadsheet.worksheet("Files")
     ws.append_row(data)
