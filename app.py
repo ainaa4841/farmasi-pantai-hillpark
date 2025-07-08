@@ -186,67 +186,85 @@ elif choice == "Manage Schedule":
 
         st.markdown("""
         <style>
-            .appt-table {
+            table {
                 border-collapse: collapse;
                 width: 100%;
                 margin-bottom: 20px;
             }
-            .appt-table th, .appt-table td {
-                border: 1px solid #ccc;
-                padding: 8px;
+            th, td {
+                border: 1px solid #ddd;
+                padding: 10px;
                 text-align: left;
+                vertical-align: middle;
             }
-            .appt-table th {
-                background-color: #f0f0f0;
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+            }
+            select, button {
+                padding: 4px 8px;
+                font-size: 14px;
             }
         </style>
         """, unsafe_allow_html=True)
 
         # Table header
         st.markdown("""
-        <table class='appt-table'>
-            <tr>
-                <th>Appointment ID</th>
-                <th>Customer Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>Appointment ID</th>
+                    <th>Customer Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
         """, unsafe_allow_html=True)
 
-        # Table rows - one at a time with Streamlit layout for interaction
         for idx, appt in enumerate(appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
 
-            cols = st.columns([1, 2, 2, 2, 1.5, 1, 2, 1.5])
+            # Streamlit form to hold the dropdown + button in the table
+            with st.form(key=f"status_form_{idx}"):
+                col1, col2 = st.columns([3, 1])
+                new_status = col1.selectbox(
+                    "Select status",
+                    ["Pending Confirmation", "Confirmed", "Cancelled"],
+                    index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
+                    key=f"status_{idx}"
+                )
+                submit = col2.form_submit_button("Update")
 
-            cols[0].write(appt["appointmentID"])
-            cols[1].write(full_name)
-            cols[2].write(email)
-            cols[3].write(phone)
-            cols[4].write(appt["Date"])
-            cols[5].write(appt["Time"])
+            # Render the row including current dropdown selection
+            row_html = f"""
+                <tr>
+                    <td>{appt["appointmentID"]}</td>
+                    <td>{full_name}</td>
+                    <td>{email}</td>
+                    <td>{phone}</td>
+                    <td>{appt["Date"]}</td>
+                    <td>{appt["Time"]}</td>
+                    <td>{new_status}</td>
+                    <td>{"✅ Updated" if submit else ""}</td>
+                </tr>
+            """
+            st.markdown(row_html, unsafe_allow_html=True)
 
-            status = cols[6].selectbox(
-                "", ["Pending Confirmation", "Confirmed", "Cancelled"],
-                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                key=f"status_dropdown_{idx}"
-            )
+            # Handle update on submit
+            if submit:
+                update_appointment_status(appt["appointmentID"], new_status)
+                st.experimental_rerun()
 
-            if cols[7].button("Update", key=f"update_button_{idx}"):
-                update_appointment_status(appt["appointmentID"], status)
-                st.success(f"✅ Appointment {appt['appointmentID']} updated to {status}")
-                st.rerun()
-
-
-
+        # Close the table
+        st.markdown("</tbody></table>", unsafe_allow_html=True)
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
