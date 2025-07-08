@@ -189,7 +189,7 @@ elif choice == "Manage Schedule":
             header[4].markdown("**🕒 Time**")
             header[5].markdown("**📄 Referral Letter**")
             header[6].markdown("**📌 Status**")
-
+            
             for appt in past_appts:
                 cust = customers.get(str(appt["customerID"]), {})
                 full_name = cust.get("Full Name", "Unknown")
