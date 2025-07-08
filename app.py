@@ -116,67 +116,23 @@ elif choice == "Book Appointment":
                 ])
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 
+# --------------------------------------------
+# Manage Schedule
 elif choice == "Manage Schedule":
-    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
+    st.subheader("Pharmacist: Manage Appointments & Availability")
     appointments = get_appointments()
-    customers = {str(c["customerID"]): c for c in get_all_customers()}
+    customers = {str(c["customerID"]): c for c in get_all_customers()}  # ✅ FIX
 
-    if not appointments:
-        st.info("No appointments found.")
-    else:
-        st.markdown("### Booked Appointments")
-        
-        # Styling
-        st.markdown("""
-            <style>
-                .appt-header, .appt-row {
-                    border-bottom: 1px solid #ddd;
-                    padding: 6px 0;
-                    font-size: 15px;
-                }
-                .appt-header {
-                    font-weight: bold;
-                    background-color: #f0f2f6;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # Header
-        headers = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
-        headers[0].markdown("<div class='appt-header'>ID</div>", unsafe_allow_html=True)
-        headers[1].markdown("<div class='appt-header'>Name</div>", unsafe_allow_html=True)
-        headers[2].markdown("<div class='appt-header'>Email</div>", unsafe_allow_html=True)
-        headers[3].markdown("<div class='appt-header'>Phone</div>", unsafe_allow_html=True)
-        headers[4].markdown("<div class='appt-header'>Date</div>", unsafe_allow_html=True)
-        headers[5].markdown("<div class='appt-header'>Time</div>", unsafe_allow_html=True)
-        headers[6].markdown("<div class='appt-header'>Status</div>", unsafe_allow_html=True)
-        headers[7].markdown("<div class='appt-header'>Action</div>", unsafe_allow_html=True)
-
-        # Rows
-        for idx, appt in enumerate(appointments):
-            cust = customers.get(str(appt["customerID"]), {})
-            full_name = cust.get("Full Name", "Unknown")
-            email = cust.get("Email", "N/A")
-            phone = cust.get("Phone Number", "N/A")
-
-            cols = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
-            cols[0].markdown(f"<div class='appt-row'>{appt['appointmentID']}</div>", unsafe_allow_html=True)
-            cols[1].markdown(f"<div class='appt-row'>{full_name}</div>", unsafe_allow_html=True)
-            cols[2].markdown(f"<div class='appt-row'>{email}</div>", unsafe_allow_html=True)
-            cols[3].markdown(f"<div class='appt-row'>{phone}</div>", unsafe_allow_html=True)
-            cols[4].markdown(f"<div class='appt-row'>{appt['Date']}</div>", unsafe_allow_html=True)
-            cols[5].markdown(f"<div class='appt-row'>{appt['Time']}</div>", unsafe_allow_html=True)
-
-            new_status = cols[6].selectbox(
-                " ",
-                ["Pending Confirmation", "Confirmed", "Cancelled"],
-                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                key=f"status_{idx}"
-            )
-            if cols[7].button("Update", key=f"update_{idx}"):
-                update_appointment_status(appt["appointmentID"], new_status)
-                st.success("Appointment updated.")
-                st.rerun()
+    for idx, appt in enumerate(appointments):
+        cust = customers.get(str(appt["customerID"]), {})  # ✅ FIX
+        st.write(f"**Appointment ID:** {appt['appointmentID']}")
+        st.write(f"👤 Customer: {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
+        st.write(f"📅 Date: {appt['Date']} | 🕒 Time: {appt['Time']} | Status: {appt['Status']}")
+        new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"], key=f"status_{idx}")
+        if st.button("Update", key=f"update_{idx}"):
+            update_appointment_status(appt["appointmentID"], new_status)
+            st.success("Updated!")
+            st.rerun()
 
 
 
