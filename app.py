@@ -188,11 +188,13 @@ elif choice == "Manage Schedule":
             update_appointment_status(appt["appointmentID"], new_status)
             st.success("Updated!")
             st.rerun()
-        st.markdown("---")
 
-    st.markdown("### ➕ Add New Slot")
+# --------------------------------------------
+# Update Slot Availability
+elif choice == "Update Slot Availability":
+    st.subheader("### ➕ Add New Slot")
     slot_date = st.date_input("Available Date")
-    slot_time = st.selectbox("Available Time", ["9:00AM", "11:00AM", "2:00PM", "4:00PM"])
+    slot_time = st.selectbox("Available Time", ["9:00AM-10:00AM", "10:00AM-11:00AM", "11:00AM-12:00PM","2:00PM-3:00PM", "3:00PM-4:00PM", "4:00PM-5:00PM"])
     schedule = get_pharmacist_schedule()
     if st.button("Add Slot"):
         if any(s["Date"] == str(slot_date) and s["Time"] == slot_time for s in schedule):
@@ -201,9 +203,10 @@ elif choice == "Manage Schedule":
             update_schedule(str(slot_date), slot_time)
             st.success("Slot added!")
             st.rerun()
+            st.markdown("---")
 
     # Calendar display
-    st.markdown("### 📅 Pharmacist Availability Calendar")
+    st.markdown("### 📅 Available Slots")
     grouped = defaultdict(list)
     for s in schedule:
         grouped[s["Date"]].append(s["Time"])
