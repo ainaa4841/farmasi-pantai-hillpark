@@ -202,17 +202,31 @@ elif choice == "Manage Schedule":
             st.markdown("---")
             st.markdown("### 📋 Past Appointments (Cancelled or Completed)")
 
-            # Header
-            header = st.columns([2, 2, 2])
-            header[0].markdown("**📅 Date**")
-            header[1].markdown("**🕒 Time**")
-            header[2].markdown("**📌 Status**")
+           # Header
+            header = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
+            header[0].markdown("**🆔 ID**")
+            header[1].markdown("**👤 Name**")
+            header[2].markdown("**📧 Contact**")
+            header[3].markdown("**📅 Date**")
+            header[4].markdown("**🕒 Time**")
+            header[5].markdown("**📄 Referral Letter**")
+            header[6].markdown("**📌 Status**")
 
             for appt in past_appts:
-                cols = st.columns([2, 2, 2])
-                cols[0].write(appt["Date"])
-                cols[1].write(appt["Time"])
-                cols[2].write(appt["Status"])
+                ust = customers.get(str(appt["customerID"]), {})
+                full_name = cust.get("Full Name", "Unknown")
+                email = cust.get("Email", "N/A")
+                phone = cust.get("Phone Number", "N/A")
+                referral_link = appt.get("appointmentReferralLetter", "")
+
+                cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
+                cols[0].write(f"🆔 {appt['appointmentID']}")
+                cols[1].write(f"👤 {full_name}")
+                cols[2].write(f"📧 {email}\n📱 {phone}")
+                cols[3].write(f"📅 {appt['Date']}")
+                cols[4].write(f"🕒 {appt['Time']}")
+                cols[5].markdown(f"[📄 Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
+                cols[6].write(f"📌 {appt['Status']}")
 
 
 # --------------------------------------------
