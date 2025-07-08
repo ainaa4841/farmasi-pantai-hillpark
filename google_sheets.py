@@ -55,23 +55,24 @@ def get_pharmacist_schedule():
 def update_appointment_status(appointment_id, new_status, new_date=None, new_time=None):
     worksheet = spreadsheet.worksheet("Appointments")
     records = worksheet.get_all_records()
-    for idx, record in enumerate(records, start=2):  # row 2 is the first data row
+    for idx, record in enumerate(records, start=2):  # Start from 2 due to header row
         if str(record["appointmentID"]) == str(appointment_id):
             if new_status == "Cancelled":
-                worksheet.update_acell(f"E{idx}", "Cancelled")
+                worksheet.update(f"E{idx}", new_status)
                 restore_schedule_slot(record["Date"], record["Time"])
             elif new_status == "Rescheduled":
                 old_date, old_time = record["Date"], record["Time"]
-                worksheet.update_acell(f"C{idx}", new_date)  # Date
-                worksheet.update_acell(f"D{idx}", new_time)  # Time
-                worksheet.update_acell(f"E{idx}", "Pending Confirmation")
-                restore_schedule_slot(old_date, old_time)
-                remove_schedule_slot(new_date, new_time)
+
+                # Ensure new values are provided
+                if new_date and new_time:
+                    worksheet.update(f"C{idx}", new_date)
+                    worksheet.update(f"D{idx}", new_time)
+                    worksheet.update(f"E{idx}", "Pending Confirmation")
+                    restore_schedule_slot(old_date, old_time)
+                    remove_schedule_slot(new_date, new_time)
             else:
-                worksheet.update_acell(f"E{idx}", new_status)
+                worksheet.update(f"E{idx}", new_status)
             break
-
-
 
 def get_all_customers():
     return spreadsheet.worksheet("Customers").get_all_records()
