@@ -171,8 +171,8 @@ elif choice == "My Appointments":
 
                 cols[4].write("—")  # Hide cancel button
             else:
-                cols[3].write("—")  # Hide reschedule button
-                if cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
+                cols[3].button("Reschedule", key=f"reschedule_{idx}"):
+                cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
                     update_appointment_status(
                         appointment_id=appt["appointmentID"],
                         new_status="Cancelled"
