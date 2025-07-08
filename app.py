@@ -10,6 +10,9 @@ from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 import pandas as pd
 
 st.set_page_config(page_title="Farmasi Pantai Hillpark", layout="wide")
+if "customer_id" not in st.session_state:
+    st.session_state.customer_id = None
+
 
 with open("css/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
@@ -63,9 +66,16 @@ elif choice == "Login":
             st.session_state.user_role = role
             st.session_state.user_username = username
             st.session_state.user_email = email
+
+            # ✅ Add this part to fix the error:
+            if role == "Customer":
+                from auth import get_customer_id
+                st.session_state.customer_id = get_customer_id(username)
+
             st.rerun()
         else:
             st.error("Invalid credentials!")
+
         
 
 elif choice == "Book Appointment":
