@@ -174,7 +174,7 @@ elif choice == "My Appointments":
 # --------------------------------------------
 # Manage Schedule
 elif choice == "Manage Schedule":
-    st.subheader("Pharmacist: Manage Appointments & Availability")
+    st.subheader("📌Pharmacist: Manage Appointments & Availability")
     appointments = get_appointments()
     customers = {str(c["customerID"]): c for c in get_all_customers()}  # ✅ FIX
 
@@ -206,7 +206,7 @@ elif choice == "Update Slot Availability":
         st.markdown("---")
 
     # Calendar display
-    st.markdown("### 📅 Available Slots")
+    st.markdown("### 📌 Available Slots")
 
     if not schedule:
         st.info("No slots available.")
