@@ -236,7 +236,7 @@ elif choice == "Manage Schedule":
             st.write(f"{slot['Date']} - {slot['Time']}")
     else:
         st.info("No available schedule slots found.")
-
+        st.experimental_rerun()
 
 elif choice == "Logout":
     st.session_state.logged_in = False
