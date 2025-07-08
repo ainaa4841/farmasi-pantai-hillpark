@@ -26,12 +26,8 @@ def save_appointment(data):
     appointment_id = generate_next_id("Appointments", "appointmentID")
     worksheet.append_row([appointment_id] + data)
 
-    # Extract values from data list
-    date = data[1]
-    time = data[2]
-    
     # Remove booked slot from schedule
-    remove_schedule_slot(date, time)
+    remove_schedule_slot(data[1], data[2])  # data[1]=date, data[2]=time
 
     [customer_id, selected_date, selected_time, "Pending Confirmation", referral_letter_path]
 
