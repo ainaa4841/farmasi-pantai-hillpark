@@ -184,24 +184,27 @@ elif choice == "Manage Schedule":
     else:
         st.markdown("### Booked Appointments")
 
-        # Basic HTML table with borders
-        table_html = """
+        st.markdown("""
         <style>
-            table {
-                width: 100%;
+            .appt-table {
                 border-collapse: collapse;
+                width: 100%;
                 margin-bottom: 20px;
             }
-            th, td {
+            .appt-table th, .appt-table td {
                 border: 1px solid #ccc;
                 padding: 8px;
                 text-align: left;
             }
-            th {
+            .appt-table th {
                 background-color: #f0f0f0;
             }
         </style>
-        <table>
+        """, unsafe_allow_html=True)
+
+        # Table header
+        st.markdown("""
+        <table class='appt-table'>
             <tr>
                 <th>Appointment ID</th>
                 <th>Customer Name</th>
@@ -212,42 +215,36 @@ elif choice == "Manage Schedule":
                 <th>Status</th>
                 <th>Action</th>
             </tr>
-        """
+        </table>
+        """, unsafe_allow_html=True)
 
+        # Table rows - one at a time with Streamlit layout for interaction
         for idx, appt in enumerate(appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
 
-            status_select = st.selectbox(
-                f"Status for {appt['appointmentID']}",
-                ["Pending Confirmation", "Confirmed", "Cancelled"],
+            cols = st.columns([1, 2, 2, 2, 1.5, 1, 2, 1.5])
+
+            cols[0].write(appt["appointmentID"])
+            cols[1].write(full_name)
+            cols[2].write(email)
+            cols[3].write(phone)
+            cols[4].write(appt["Date"])
+            cols[5].write(appt["Time"])
+
+            status = cols[6].selectbox(
+                "", ["Pending Confirmation", "Confirmed", "Cancelled"],
                 index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                key=f"status_{idx}"
+                key=f"status_dropdown_{idx}"
             )
 
-            update_btn = st.button("Update", key=f"update_{idx}")
-            if update_btn:
-                update_appointment_status(appt["appointmentID"], status_select)
-                st.success(f"Updated appointment {appt['appointmentID']} to {status_select}")
+            if cols[7].button("Update", key=f"update_button_{idx}"):
+                update_appointment_status(appt["appointmentID"], status)
+                st.success(f"✅ Appointment {appt['appointmentID']} updated to {status}")
                 st.rerun()
 
-            table_html += f"""
-                <tr>
-                    <td>{appt['appointmentID']}</td>
-                    <td>{full_name}</td>
-                    <td>{email}</td>
-                    <td>{phone}</td>
-                    <td>{appt['Date']}</td>
-                    <td>{appt['Time']}</td>
-                    <td>{appt['Status']}</td>
-                    <td>Status control above</td>
-                </tr>
-            """
-
-        table_html += "</table>"
-        st.markdown(table_html, unsafe_allow_html=True)
 
 
 # --------------------------------------------
