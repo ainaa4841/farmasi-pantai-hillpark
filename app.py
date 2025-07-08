@@ -182,67 +182,55 @@ elif choice == "Manage Schedule":
 
 # --------------------------------------------
 # Manage Schedule
-st.subheader("📋 Pharmacist: Manage Appointments & Availability")
-appointments = get_appointments()
-customers = {str(c["customerID"]): c for c in get_all_customers()}
+elif choice == "Manage Schedule":
+    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
 
-if not appointments:
-    st.info("No appointments found.")
-else:
-    st.markdown("### Booked Appointments")
-    st.markdown("""
-        <style>
-        .appt-row {
-            border-bottom: 1px solid #ccc;
-            padding: 8px 0;
-        }
-        .appt-header {
-            font-weight: bold;
-            border-bottom: 2px solid black;
-            padding-bottom: 6px;
-            margin-bottom: 4px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    appointments = get_appointments()
+    customers = {str(c["customerID"]): c for c in get_all_customers()}
 
-    # Header row
-    header = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
-    header[0].markdown("<div class='appt-header'>ID</div>", unsafe_allow_html=True)
-    header[1].markdown("<div class='appt-header'>Name</div>", unsafe_allow_html=True)
-    header[2].markdown("<div class='appt-header'>Email</div>", unsafe_allow_html=True)
-    header[3].markdown("<div class='appt-header'>Phone</div>", unsafe_allow_html=True)
-    header[4].markdown("<div class='appt-header'>Date</div>", unsafe_allow_html=True)
-    header[5].markdown("<div class='appt-header'>Time</div>", unsafe_allow_html=True)
-    header[6].markdown("<div class='appt-header'>Status</div>", unsafe_allow_html=True)
-    header[7].markdown("<div class='appt-header'>Action</div>", unsafe_allow_html=True)
+    if not appointments:
+        st.info("No appointments found.")
+    else:
+        st.markdown("### Booked Appointments")
 
-    for idx, appt in enumerate(appointments):
-        cust = customers.get(str(appt["customerID"]), {})
-        full_name = cust.get("Full Name", "Unknown")
-        email = cust.get("Email", "N/A")
-        phone = cust.get("Phone Number", "N/A")
+        for idx, appt in enumerate(appointments):
+            cust = customers.get(str(appt["customerID"]), {})
+            full_name = cust.get("Full Name", "Unknown")
+            email = cust.get("Email", "N/A")
+            phone = cust.get("Phone Number", "N/A")
 
-        cols = st.columns([1, 2, 2, 2, 1.5, 1.5, 2, 1.5])
-        cols[0].write(appt["appointmentID"])
-        cols[1].write(full_name)
-        cols[2].write(email)
-        cols[3].write(phone)
-        cols[4].write(appt["Date"])
-        cols[5].write(appt["Time"])
+            # Wrap appointment row in a bordered div
+            st.markdown(f"""
+                <div style="
+                    border: 1px solid #ccc;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
 
-        new_status = cols[6].selectbox(
-            "Status",
-            ["Pending Confirmation", "Confirmed", "Cancelled"],
-            index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-            key=f"status_{idx}"
-        )
+            # Columns inside bordered box
+            cols = st.columns([2, 3, 3, 2, 2, 2])
+            cols[0].write(f"🆔 **{appt['appointmentID']}**")
+            cols[1].write(f"👤 **{full_name}**")
+            cols[2].write(f"📧 {email}<br>📱 {phone}", unsafe_allow_html=True)
+            cols[3].write(f"📅 {appt['Date']}")
+            cols[4].write(f"🕒 {appt['Time']}")
 
-        if cols[7].button("Update", key=f"update_{idx}"):
-            update_appointment_status(appt["appointmentID"], new_status)
-            st.success(f"Updated appointment {appt['appointmentID']}")
-            st.rerun()
+            new_status = cols[5].selectbox(
+                "Status",
+                ["Pending Confirmation", "Confirmed", "Cancelled"],
+                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
+                key=f"status_{idx}"
+            )
 
+            if st.button("Update", key=f"update_{idx}"):
+                update_appointment_status(appt["appointmentID"], new_status)
+                st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
+                st.rerun()
 
+            # End of bordered div
+            st.markdown("</div>", unsafe_allow_html=True)
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
