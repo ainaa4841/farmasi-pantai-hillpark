@@ -167,6 +167,10 @@ elif choice == "Manage Schedule":
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
 
+            st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
+
             st.markdown("</div>", unsafe_allow_html=True)
 
         # --------------------
@@ -208,6 +212,12 @@ elif choice == "Manage Schedule":
                 cols[4].write(f"{appt['Time']}")
                 cols[5].markdown(f"[📄 Download]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
                 cols[6].write(f"{appt['Status']}")
+                
+                st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
+
+
 
 
 # --------------------------------------------
