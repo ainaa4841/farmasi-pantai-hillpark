@@ -58,16 +58,16 @@ def update_appointment_status(appointment_id, new_status, new_date=None, new_tim
     for idx, record in enumerate(records, start=2):
         if str(record["appointmentID"]) == str(appointment_id):
             if new_status == "Cancelled":
-                worksheet.update(f"E{idx}", [[new_status]])  # ✅ FIXED
+                worksheet.update(f"E{idx}", [[new_status]])  
                 restore_schedule_slot(record["Date"], record["Time"])
             elif new_status == "Rescheduled":
-                worksheet.update(f"C{idx}", [[new_date]])  # ✅ FIXED
-                worksheet.update(f"D{idx}", [[new_time]])  # ✅ FIXED
-                worksheet.update(f"E{idx}", [["Pending Confirmation"]])  # ✅ FIXED
+                worksheet.update(f"C{idx}", [[new_date]])  
+                worksheet.update(f"D{idx}", [[new_time]])  
+                worksheet.update(f"E{idx}", [["Pending Confirmation"]]) 
                 restore_schedule_slot(record["Date"], record["Time"])
                 remove_schedule_slot(new_date, new_time)
             else:
-                worksheet.update(f"E{idx}", [[new_status]])  # ✅ FIXED
+                worksheet.update(f"E{idx}", [[new_status]])  
             break
 
 def get_all_customers():
@@ -82,7 +82,9 @@ def remove_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
     records = worksheet.get_all_records()
     for idx, record in enumerate(records, start=2):
-        if str(record["Date"]) == str(date) and str(record["Time"]) == str(time):
+        rec_date = str(record["Date"]).strip().lower()
+        rec_time = str(record["Time"]).strip().lower()
+        if rec_date == str(date).strip().lower() and rec_time == str(time).strip().lower():
             worksheet.delete_rows(idx)
             break
 
@@ -90,6 +92,8 @@ def restore_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
     records = worksheet.get_all_records()
     for record in records:
-        if str(record["Date"]) == str(date) and str(record["Time"]) == str(time):
-            return  # Already exists, don't add duplicate
+        rec_date = str(record["Date"]).strip().lower()
+        rec_time = str(record["Time"]).strip().lower()
+        if rec_date == str(date).strip().lower() and rec_time == str(time).strip().lower():
+            return  # already exists
     worksheet.append_row([date, time])
