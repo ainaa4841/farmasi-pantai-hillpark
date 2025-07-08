@@ -169,6 +169,8 @@ elif choice == "Manage Schedule":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
+        # ----------------------
+        # Section 2: Cancelled & Completed
         # --------------------
         # Section 2: Past Appointments
         past_appts = [appt for appt in appointments if appt["Status"] in ["Cancelled", "Completed"]]
@@ -177,7 +179,10 @@ elif choice == "Manage Schedule":
             st.markdown("---")
             st.markdown("### 📋 Past Appointments (Cancelled or Completed)")
 
-           # Header
+            # Build customer lookup to fetch name/email/phone
+            customers = {str(c["customerID"]): c for c in get_all_customers()}
+
+            # Header
             header = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
             header[0].markdown("**🆔 ID**")
             header[1].markdown("**👤 Name**")
@@ -188,22 +193,20 @@ elif choice == "Manage Schedule":
             header[6].markdown("**📌 Status**")
 
             for appt in past_appts:
-                ust = customers.get(str(appt["customerID"]), {})
+                cust = customers.get(str(appt["customerID"]), {})
                 full_name = cust.get("Full Name", "Unknown")
                 email = cust.get("Email", "N/A")
                 phone = cust.get("Phone Number", "N/A")
                 referral_link = appt.get("appointmentReferralLetter", "")
 
                 cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
-                cols[0].write(f" {appt['appointmentID']}")
-                cols[1].write(f" {full_name}")
-                cols[2].write(f" {email}\n\n{phone}")
-                cols[3].write(f" {appt['Date']}")
-                cols[4].write(f" {appt['Time']}")
-                cols[5].markdown(f"[ Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
-                cols[6].write(f" {appt['Status']}")
-
-
+                cols[0].write(f"{appt['appointmentID']}")
+                cols[1].write(f"{full_name}")
+                cols[2].markdown(f"{email}<br>{phone}", unsafe_allow_html=True)
+                cols[3].write(f"{appt['Date']}")
+                cols[4].write(f"{appt['Time']}")
+                cols[5].markdown(f"[📄 Download]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
+                cols[6].write(f"{appt['Status']}")
 
 
 # --------------------------------------------
