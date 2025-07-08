@@ -113,8 +113,7 @@ elif choice == "Book Appointment":
                     selected_date,
                     selected_time,
                     "Pending Confirmation"
-                    referral_letter_path
-                ])
+                ], referral_path=file_link)
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 
 # --------------------------------------------
