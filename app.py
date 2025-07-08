@@ -146,10 +146,11 @@ elif choice == "Manage Schedule":
             st.markdown(f"""
                 <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
             """, unsafe_allow_html=True)
+            
             cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 2])
             cols[0].write(f"🆔 {appt['appointmentID']}")
             cols[1].write(f"👤 {full_name}")
-            cols[2].write(f"📧 {email}\n📱 {phone}")
+            cols[2].write(f"📧 {email}\n\n📱 {phone}")
             cols[3].write(f"📅 {appt['Date']}")
             cols[4].write(f"🕒 {appt['Time']}")
             cols[5].markdown(f"[📄 Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
@@ -166,9 +167,7 @@ elif choice == "Manage Schedule":
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
 
-            st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
+         
 
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -183,9 +182,7 @@ elif choice == "Manage Schedule":
 
             # Build customer lookup to fetch name/email/phone
             customers = {str(c["customerID"]): c for c in get_all_customers()}
-            st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
+            
 
             # Header
             header = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
@@ -216,9 +213,7 @@ elif choice == "Manage Schedule":
                 cols[5].markdown(f"[📄 Download]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
                 cols[6].write(f"{appt['Status']}")
                 
-                st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
+               
 
 
 
