@@ -120,35 +120,56 @@ elif choice == "Book Appointment":
 # My Appointments
 elif choice == "My Appointments":
     st.subheader("📋 My Appointments")
+
     appointments = get_appointments()
-    my_appointments = [a for a in appointments if str(a["customerID"]) == str(st.session_state.customer_id)]
+    my_appointments = [
+        appt for appt in appointments
+        if str(appt.get('customerID')) == str(st.session_state.customer_id)
+    ]
 
     if not my_appointments:
         st.info("No appointments found.")
     else:
-        df = pd.DataFrame(my_appointments)
-        df = df[["appointmentID", "Date", "Time", "Status"]]
-        df.columns = ["Appointment ID", "Date", "Time", "Status"]
-        gb = GridOptionsBuilder.from_dataframe(df)
-        gb.configure_selection("single", use_checkbox=True)
-        grid = AgGrid(df, gridOptions=gb.build(), update_mode=GridUpdateMode.SELECTION_CHANGED)
+        st.markdown("### Your Booked Slots")
+        for idx, appt in enumerate(my_appointments):
+            cols = st.columns([2, 2, 2, 2, 2])
+            cols[0].write(f"📅 **{appt['Date']}**")
+            cols[1].write(f"🕒 **{appt['Time']}**")
+            cols[2].write(f"📌 **{appt['Status']}**")
 
-        selected = grid['selected_rows']
-        if selected:
-            selected_appt = selected[0]
-            st.markdown("### 🔧 Manage Appointment")
-            new_date = st.selectbox("Reschedule Date", sorted(set([s["Date"] for s in get_pharmacist_schedule()])))
-            new_times = [s["Time"] for s in get_pharmacist_schedule() if s["Date"] == new_date]
-            new_time = st.selectbox("Reschedule Time", new_times)
+            if cols[3].button("Reschedule", key=f"reschedule_{idx}"):
+                with st.form(f"reschedule_form_{idx}"):
+                    st.subheader(f"Reschedule Slot for {appt['Date']} {appt['Time']}")
+                    schedule = get_pharmacist_schedule()
+                    booked = [(a['Date'], a['Time']) for a in get_appointments()]
+                    available_slots = [
+                        s for s in schedule if (s['Date'], s['Time']) not in booked
+                    ]
 
-            if st.button("Reschedule"):
-                update_appointment_status(selected_appt["Appointment ID"], "Rescheduled", new_date, new_time)
-                st.success("Rescheduled successfully!")
-                st.rerun()
-            if st.button("Cancel Appointment"):
-                update_appointment_status(selected_appt["Appointment ID"], "Cancelled")
+                    dates = sorted(list(set([s['Date'] for s in available_slots])))
+                    new_date = st.selectbox("New Date", dates)
+                    new_times = [s['Time'] for s in available_slots if s['Date'] == new_date]
+                    new_time = st.selectbox("New Time", new_times)
+
+                    submitted = st.form_submit_button("Confirm Reschedule")
+                    if submitted:
+                        update_appointment_status(
+                            appointment_id=appt["appointmentID"],
+                            new_status="Rescheduled",
+                            new_date=new_date,
+                            new_time=new_time
+                        )
+                        st.success("Rescheduled successfully!")
+                        st.rerun()
+
+            if cols[4].button("Cancel", key=f"cancel_{idx}"):
+                update_appointment_status(
+                    appointment_id=appt["appointmentID"],
+                    new_status="Cancelled"
+                )
                 st.success("Appointment cancelled.")
                 st.rerun()
+
 
 # --------------------------------------------
 # Manage Schedule
