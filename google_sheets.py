@@ -55,32 +55,30 @@ def get_pharmacist_schedule():
 def update_appointment_status(appointment_id, new_status, new_date=None, new_time=None):
     worksheet = spreadsheet.worksheet("Appointments")
     records = worksheet.get_all_records()
+    matched = False
 
-    for idx, record in enumerate(records, start=2):  # Start from row 2 due to headers
-        if str(record["appointmentID"]).strip() == str(appointment_id).strip():
-
-            current_date = str(record["Date"]).strip()
-            current_time = str(record["Time"]).strip()
+    for idx, record in enumerate(records, start=2):  # Header row is 1
+        current_id = str(record.get("appointmentID", "")).strip()
+        if current_id == str(appointment_id).strip():
+            matched = True
+            old_date = str(record["Date"]).strip()
+            old_time = str(record["Time"]).strip()
 
             if new_status == "Cancelled":
-                worksheet.update(f"E{idx}", [[new_status]])
-                restore_schedule_slot(current_date, current_time)
-
+                worksheet.update_acell(f"E{idx}", "Cancelled")
+                restore_schedule_slot(old_date, old_time)
             elif new_status == "Rescheduled":
-                # Ensure new slot is not None
-                if new_date and new_time:
-                    worksheet.update_acell(f"C{idx}", new_date)
-                    worksheet.update_acell(f"D{idx}", new_time)
-                    worksheet.update_acell(f"E{idx}", "Pending Confirmation")
-
-                    # Restore old slot and remove new one
-                    restore_schedule_slot(current_date, current_time)
-                    remove_schedule_slot(new_date, new_time)
-
+                worksheet.update_acell(f"C{idx}", new_date)
+                worksheet.update_acell(f"D{idx}", new_time)
+                worksheet.update_acell(f"E{idx}", "Pending Confirmation")
+                restore_schedule_slot(old_date, old_time)
+                remove_schedule_slot(new_date, new_time)
             else:
-                worksheet.update(f"E{idx}", [[new_status]])
+                worksheet.update_acell(f"E{idx}", new_status)
+            break
 
-            break  # exit loop once matched
+    if not matched:
+        print(f"❌ Appointment ID {appointment_id} not found in sheet.")
 
 def get_all_customers():
     return spreadsheet.worksheet("Customers").get_all_records()
