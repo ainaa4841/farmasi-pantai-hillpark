@@ -265,6 +265,7 @@ elif choice == "Manage Schedule":
 
         # Close the table
         st.markdown("</tbody></table>", unsafe_allow_html=True)
+
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
