@@ -176,13 +176,12 @@ elif choice == "My Appointments":
 elif choice == "Manage Schedule":
     st.subheader("Pharmacist: Manage Appointments & Availability")
     appointments = get_appointments()
-    customers = {c["customerID"]: c for c in get_all_customers()}
+    customers = {str(c["customerID"]): c for c in get_all_customers()}  # ✅ FIX
 
     for idx, appt in enumerate(appointments):
-        cust = customers.get(str(appt["customerID"]), {})
+        cust = customers.get(str(appt["customerID"]), {})  # ✅ FIX
         st.write(f"**Appointment ID:** {appt['appointmentID']}")
-        st.write(f"👤 Customer: {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email')} | Phone: {cust.get('Phone Number')}")
-        st.write(f"📅 Date: {appt['Date']} | 🕒 Time: {appt['Time']} | Status: {appt['Status']}")
+        st.write(f"👤 Customer: {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
         new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"], key=f"status_{idx}")
         if st.button("Update", key=f"update_{idx}"):
             update_appointment_status(appt["appointmentID"], new_status)
