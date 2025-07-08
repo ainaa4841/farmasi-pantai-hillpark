@@ -69,9 +69,9 @@ def update_appointment_status(appointment_id, new_status, new_date=None, new_tim
             elif new_status == "Rescheduled":
                 # Ensure new slot is not None
                 if new_date and new_time:
-                    worksheet.update(f"C{idx}", [[new_date]])
-                    worksheet.update(f"D{idx}", [[new_time]])
-                    worksheet.update(f"E{idx}", [["Pending Confirmation"]])
+                    worksheet.update_acell(f"C{idx}", new_date)
+                    worksheet.update_acell(f"D{idx}", new_time)
+                    worksheet.update_acell(f"E{idx}", "Pending Confirmation")
 
                     # Restore old slot and remove new one
                     restore_schedule_slot(current_date, current_time)
