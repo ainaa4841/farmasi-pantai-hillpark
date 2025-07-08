@@ -4,6 +4,8 @@ from auth import register_user, login_user, check_email_exists, check_password_c
 from google_sheets import (save_customer, save_appointment, save_file_metadata,
                            upload_to_drive, get_appointments, get_pharmacist_schedule, update_schedule)
 import os
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+import pandas as pd
 
 st.set_page_config(page_title="Farmasi Pantai Hillpark", layout="wide")
 
@@ -111,35 +113,75 @@ elif choice == "Book Appointment":
 
 
 elif choice == "My Appointments":
-    st.subheader("My Appointments")
+    st.subheader("📋 My Appointments")
+
     appointments = get_appointments()
-    my_appointments = [appt for appt in appointments if appt['Name'] == st.session_state.user_username]
+    my_appointments = [
+        appt for appt in appointments
+        if str(appt['customerID']) == str(st.session_state.customer_id)
+    ]
 
     if not my_appointments:
         st.info("No appointments found.")
     else:
-        for idx, appt in enumerate(my_appointments):
-            st.write(f"Date: {appt['Date']}, Time: {appt['Time']}, Status: {appt['Status']}")
+        # Show as interactive AgGrid
+        df = pd.DataFrame(my_appointments)
+        df_display = df[["appointmentID", "Date", "Time", "Status"]]
+        df_display.columns = ["Appointment ID", "Date", "Time", "Status"]
 
-            reschedule_button = st.button(f"Reschedule {appt['Date']} {appt['Time']}", key=f"reschedule_{idx}")
-            cancel_button = st.button(f"Cancel {appt['Date']} {appt['Time']}", key=f"cancel_{idx}")
+        gb = GridOptionsBuilder.from_dataframe(df_display)
+        gb.configure_selection("single", use_checkbox=True)
+        gb.configure_pagination(enabled=True)
+        grid_options = gb.build()
 
-            if reschedule_button:
-                new_date = st.date_input(f"Select new date for {appt['Date']} {appt['Time']}", key=f"new_date_{idx}")
-                new_time = st.selectbox(f"Select new time for {appt['Date']} {appt['Time']}",
-                                        ["9:00AM", "11:00AM", "2:00PM", "4:00PM"], key=f"new_time_{idx}")
-                if st.button(f"Confirm Reschedule {appt['Date']} {appt['Time']}", key=f"confirm_{idx}"):
-                    update_appointment_status(appt['Name'], appt['Date'], appt['Time'], "Rescheduled", str(new_date), new_time)
-                    st.success(f"Appointment rescheduled to {new_date} at {new_time}. Status: Pending Confirmation.")
-                    st.rerun()
+        grid_response = AgGrid(
+            df_display,
+            gridOptions=grid_options,
+            update_mode=GridUpdateMode.SELECTION_CHANGED,
+            height=300,
+            fit_columns_on_grid_load=True
+        )
 
-            if cancel_button:
-                update_appointment_status(appt['Name'], appt['Date'], appt['Time'], "Cancelled")
-                st.success("Appointment cancelled successfully!")
-                st.rerun()
+        selected = grid_response['selected_rows']
 
-elif choice == "Pharmacist Dashboard":
-    st.subheader("Pharmacist Dashboard (Coming Soon)")
+        if selected:
+            selected_appt = selected[0]
+            st.markdown("### 🔧 Manage Appointment")
+            st.write(f"**Appointment ID:** {selected_appt['Appointment ID']}")
+            st.write(f"**Date:** {selected_appt['Date']}")
+            st.write(f"**Time:** {selected_appt['Time']}")
+            st.write(f"**Status:** {selected_appt['Status']}")
+
+            # 🔄 Get available schedule from Google Sheets
+            schedule = get_pharmacist_schedule()
+            available_dates = sorted(list(set([s["Date"] for s in schedule])))
+
+            if not schedule:
+                st.warning("No available slots found. Please contact the pharmacy.")
+            else:
+                new_date = st.selectbox("New Date", available_dates)
+                available_times = [s["Time"] for s in schedule if s["Date"] == new_date]
+                new_time = st.selectbox("New Time", available_times)
+
+                if st.button("🔁 Reschedule"):
+                    update_appointment_status(
+                        appointment_id=selected_appt["Appointment ID"],
+                        new_status="Rescheduled",
+                        new_date=str(new_date),
+                        new_time=new_time
+                    )
+                    st.success("Appointment rescheduled! Status: Pending Confirmation.")
+                    st.experimental_rerun()
+
+                if st.button("❌ Cancel Appointment"):
+                    update_appointment_status(
+                        appointment_id=selected_appt["Appointment ID"],
+                        new_status="Cancelled"
+                    )
+                    st.success("Appointment cancelled successfully.")
+                    st.experimental_rerun()
+
+
 
 elif choice == "Manage Schedule":
     st.subheader("Pharmacist: Manage Appointments & Availability")
