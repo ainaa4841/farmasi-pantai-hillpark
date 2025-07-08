@@ -121,7 +121,7 @@ elif choice == "Book Appointment":
 # --------------------------------------------
 # My Appointments
 elif choice == "Manage Schedule":
-    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
+    st.subheader("Pharmacist: Manage Appointments & Availability")
 
     appointments = get_appointments()
     customers = {str(c["customerID"]): c for c in get_all_customers()}
@@ -135,7 +135,7 @@ elif choice == "Manage Schedule":
 
         # ----------------------
         # Section 1: Active Appointments
-        st.markdown("### ✅ Active Appointments (Pending / Confirmed)")
+        st.markdown("### 📋 Active Appointments (Pending / Confirmed)")
         for idx, appt in enumerate(active_appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
@@ -171,7 +171,7 @@ elif choice == "Manage Schedule":
 
         # ----------------------
         # Section 2: Cancelled & Completed
-        st.markdown("### 📁 Cancelled & Completed Appointments (Read-only)")
+        st.markdown("### 📋 Cancelled & Completed Appointments (Read-only)")
         for appt in inactive_appointments:
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
@@ -196,6 +196,8 @@ elif choice == "Manage Schedule":
 
         # --------------------
         # Section 2: Past Appointments
+        past_appts = [appt for appt in appointments if appt["Status"] in ["Cancelled", "Completed"]]
+
         if past_appts:
             st.markdown("---")
             st.markdown("### 📋 Past Appointments (Cancelled or Completed)")
