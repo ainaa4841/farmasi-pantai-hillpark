@@ -96,5 +96,10 @@ def update_customer_referral_letter(name, file_link):
             worksheet.update_acell(f"G{idx}", file_link)  # G column = Referral Letter
             break
 
+def save_report(data):
+    worksheet = spreadsheet.worksheet("Reports")
+    report_id = generate_next_id("Reports", "reportID")
+    worksheet.append_row([report_id] + data)
+    return report_id
 
 
