@@ -91,15 +91,15 @@ elif choice == "Book Appointment":
                 if not os.path.exists("uploads"):
                     os.makedirs("uploads")
 
+                
                 file_path = f"uploads/{uploaded_file.name}"
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-                file_id = upload_to_drive(file_path)
-                file_link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
+                file_link = f"Stored locally: uploads/{uploaded_file.name}"  # Optional: just a text note
+                save_file_metadata([st.session_state.user_username, uploaded_file.name, file_link])
 
                 # Save file and appointment data
-                save_file_metadata([st.session_state.user_username, uploaded_file.name, file_id])
                 from google_sheets import update_customer_referral_letter
                 update_customer_referral_letter(st.session_state.user_username, file_link)
 
