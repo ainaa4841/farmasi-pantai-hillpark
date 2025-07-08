@@ -167,6 +167,8 @@ elif choice == "Manage Schedule":
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
 
+            st.markdown("</div>", unsafe_allow_html=True)
+
             st.markdown(f"""
                 <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
             """, unsafe_allow_html=True)
