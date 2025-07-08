@@ -244,6 +244,21 @@ elif choice == "Manage Schedule":
     else:
         st.info("No available schedule slots found.")
 
+elif choice == "Add Report":
+    st.subheader("Add Appointment Report")
+    appointment_id = st.text_input("Appointment ID")
+    report_date = st.date_input("Report Date")
+    report_content = st.text_area("Report Content")
+
+    if st.button("Save Report"):
+        if not appointment_id or not report_content:
+            st.error("Please fill in all fields.")
+        else:
+            from google_sheets import save_report
+            save_report([appointment_id, str(report_date), report_content])
+            st.success("Report saved successfully.")
+
+
 
 
 elif choice == "Logout":
