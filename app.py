@@ -223,7 +223,7 @@ elif choice == "Manage Schedule":
                 cols[0].write(f" {appt['appointmentID']}")
                 cols[1].write(f" {full_name}")
                 cols[2].write(f" {email}<br>{phone}")
-                cols[3].write(f" {appt['Date']}")
+                cols[3].write(f" {appt['Date']}", unsafe_allow_html=True)
                 cols[4].write(f" {appt['Time']}")
                 cols[5].markdown(f"[ Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
                 cols[6].write(f" {appt['Status']}")
