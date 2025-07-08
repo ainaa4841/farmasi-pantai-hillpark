@@ -118,7 +118,7 @@ elif choice == "Book Appointment":
 # --------------------------------------------
 # My Appointments
 elif choice == "My Appointments":
-    st.subheader("📋 My Appointments")
+    st.subheader("My Appointments")
 
     appointments = get_appointments()
     my_appointments = [
@@ -134,7 +134,7 @@ elif choice == "My Appointments":
 
         # --------------------
         # Section 1: Active
-        st.markdown("### 🗓️ Upcoming Appointments")
+        st.markdown("### 📋 Upcoming Appointments")
         for idx, appt in enumerate(active_appts):
             cols = st.columns([2, 2, 2, 2, 2])
             cols[0].write(f"📅 **{appt['Date']}**")
