@@ -121,6 +121,8 @@ elif choice == "Book Appointment":
                 ])
 
                 st.success(f"Appointment booked on {selected_date} at {selected_time}. Status: Pending Confirmation.")
+                st.write("All Appointments Raw:", appointments)
+
 
 
 
