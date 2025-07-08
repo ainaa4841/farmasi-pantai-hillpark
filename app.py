@@ -113,6 +113,7 @@ elif choice == "Book Appointment":
                     selected_date,
                     selected_time,
                     "Pending Confirmation"
+                    file_link
                 ])
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 
@@ -213,6 +214,7 @@ elif choice == "Manage Schedule":
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
+            referral_link = appt.get("appointmentReferralLetter", "")
 
             # Wrap appointment row in a bordered div
             st.markdown(f"""
@@ -225,14 +227,20 @@ elif choice == "Manage Schedule":
             """, unsafe_allow_html=True)
 
             # Columns inside bordered box
-            cols = st.columns([2, 3, 3, 2, 2, 2])
+            cols = st.columns([1.2, 2.5, 2.5, 1.8, 1.8, 2, 2])
             cols[0].write(f"🆔 **{appt['appointmentID']}**")
             cols[1].write(f"👤 **{full_name}**")
-            cols[2].write(f"📧 {email}<br>📱 {phone}", unsafe_allow_html=True)
+            cols[2].write(f"📧 {email}\n\n📱 {phone}")
             cols[3].write(f"📅 {appt['Date']}")
             cols[4].write(f"🕒 {appt['Time']}")
 
-            new_status = cols[5].selectbox(
+            # Referral Letter Link
+            if referral_link:
+                cols[5].markdown(f"[📄 Referral Letter]({referral_link})", unsafe_allow_html=True)
+            else:
+                cols[5].write("No file")
+
+            new_status = cols[6].selectbox(
                 "Status",
                 ["Pending Confirmation", "Confirmed", "Cancelled"],
                 index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
@@ -246,6 +254,7 @@ elif choice == "Manage Schedule":
 
             # End of bordered div
             st.markdown("</div>", unsafe_allow_html=True)
+
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
