@@ -56,21 +56,19 @@ def update_appointment_status(appointment_id, new_status, new_date=None, new_tim
     worksheet = spreadsheet.worksheet("Appointments")
     records = worksheet.get_all_records()
     for idx, record in enumerate(records, start=2):
-        if str(record["appointmentID"]) == str(appointment_id):  # ✅ Fix type check
+        if str(record["appointmentID"]) == str(appointment_id):
             if new_status == "Cancelled":
-                worksheet.update(f"E{idx}", "Cancelled")
-                restore_schedule_slot(record["Date"], record["Time"])  # ✅ Return old slot
+                worksheet.update(f"E{idx}", [[new_status]])  # ✅ FIXED
+                restore_schedule_slot(record["Date"], record["Time"])
             elif new_status == "Rescheduled":
-                worksheet.update(f"C{idx}", new_date)
-                worksheet.update(f"D{idx}", new_time)
-                worksheet.update(f"E{idx}", "Pending Confirmation")
-                restore_schedule_slot(record["Date"], record["Time"])  # ✅ Restore old
-                remove_schedule_slot(new_date, new_time)              # ✅ Remove new
+                worksheet.update(f"C{idx}", [[new_date]])  # ✅ FIXED
+                worksheet.update(f"D{idx}", [[new_time]])  # ✅ FIXED
+                worksheet.update(f"E{idx}", [["Pending Confirmation"]])  # ✅ FIXED
+                restore_schedule_slot(record["Date"], record["Time"])
+                remove_schedule_slot(new_date, new_time)
             else:
-                worksheet.update(f"E{idx}", new_status)  # e.g., "Confirmed"
+                worksheet.update(f"E{idx}", [[new_status]])  # ✅ FIXED
             break
-
-
 
 def get_all_customers():
     return spreadsheet.worksheet("Customers").get_all_records()
