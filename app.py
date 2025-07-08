@@ -233,6 +233,7 @@ else:
             st.success(f"Updated appointment {appt['appointmentID']}")
             st.rerun()
 
+
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
