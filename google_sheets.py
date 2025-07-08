@@ -21,15 +21,14 @@ def save_customer(data):
     ws.append_row([cid] + data)
     return cid
 
-def save_appointment(data):
+def save_appointment(data, referral_path=None):
     worksheet = spreadsheet.worksheet("Appointments")
     appointment_id = generate_next_id("Appointments", "appointmentID")
-    worksheet.append_row([appointment_id] + data)
+    if referral_path is None:
+        referral_path = ""
+    worksheet.append_row([appointment_id] + data + [referral_path])  # Add referral path to appointment
+    remove_schedule_slot(data[1], data[2])  # data[1] = date, data[2] = time
 
-    # Remove booked slot from schedule
-    remove_schedule_slot(data[1], data[2])  # data[1]=date, data[2]=time
-
-    [customer_id, selected_date, selected_time, "Pending Confirmation", referral_letter_path]
 
 
 
