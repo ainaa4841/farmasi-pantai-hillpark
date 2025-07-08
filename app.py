@@ -169,8 +169,6 @@ elif choice == "Manage Schedule":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # ----------------------
-        # Section 2: Cancelled & Completed
         # --------------------
         # Section 2: Past Appointments
         past_appts = [appt for appt in appointments if appt["Status"] in ["Cancelled", "Completed"]]
