@@ -109,13 +109,11 @@ elif choice == "Book Appointment":
                 update_customer_referral_letter(st.session_state.user_username, file_link)
 
                 save_appointment([
-                st.session_state.customer_id,
-                selected_date,
-                selected_time,
-                "Pending Confirmation",
-                file_link  # store referral file path
+                    st.session_state.customer_id,
+                    selected_date,
+                    selected_time,
+                    "Pending Confirmation"
                 ])
-
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 
 # --------------------------------------------
