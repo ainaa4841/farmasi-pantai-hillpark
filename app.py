@@ -206,12 +206,23 @@ elif choice == "Update Slot Availability":
             st.markdown("---")
 
     # Calendar display
-    st.markdown("### 📅 Available Slots")
-    grouped = defaultdict(list)
-    for s in schedule:
-        grouped[s["Date"]].append(s["Time"])
-    for date, times in grouped.items():
-        st.markdown(f"🗓 **{date}**: {', '.join(sorted(times))}")
+        st.markdown("### 📅 Available Slots")
+
+    if not schedule:
+        st.info("No slots available.")
+    else:
+        df_slots = pd.DataFrame(schedule)
+
+        for idx, row in df_slots.iterrows():
+            cols = st.columns([3, 3, 1])
+            cols[0].write(f"📅 Date: **{row['Date']}**")
+            cols[1].write(f"🕒 Time: **{row['Time']}**")
+            if cols[2].button("❌ Delete", key=f"delete_slot_{idx}"):
+                from google_sheets import remove_schedule_slot
+                remove_schedule_slot(row['Date'], row['Time'])
+                st.success(f"Slot on {row['Date']} at {row['Time']} deleted.")
+                st.rerun()
+
 
 # --------------------------------------------
 # Add Report
