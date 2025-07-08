@@ -206,7 +206,7 @@ elif choice == "Update Slot Availability":
         st.markdown("---")
 
     # Calendar display
-        st.markdown("### 📅 Available Slots")
+    st.markdown("### 📅 Available Slots")
 
     if not schedule:
         st.info("No slots available.")
