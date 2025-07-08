@@ -144,7 +144,7 @@ elif choice == "Manage Schedule":
             referral_link = appt.get("appointmentReferralLetter", "")
 
             st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 10px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
             """, unsafe_allow_html=True)
 
             cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 2])
@@ -179,6 +179,9 @@ elif choice == "Manage Schedule":
 
             # Build customer lookup to fetch name/email/phone
             customers = {str(c["customerID"]): c for c in get_all_customers()}
+            st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
 
             # Header
             header = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
