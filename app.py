@@ -143,7 +143,36 @@ elif choice == "My Appointments":
                     with st.form(f"reschedule_form_{idx}"):
                         st.subheader(f"Reschedule Cancelled Slot")
 
-                        # Get available schedule
+                        schedule = get_pharmacist_schedule()
+                        booked = [(a['Date'], a['Time']) for a in get_appointments()]
+                        available_slots = [
+                            s for s in schedule if (s['Date'], s['Time']) not in booked
+                        ]
+
+                        if available_slots:
+                            dates = sorted(set(s['Date'] for s in available_slots))
+                            new_date = st.selectbox("New Date", dates)
+                            new_times = [s['Time'] for s in available_slots if s['Date'] == new_date]
+                            new_time = st.selectbox("New Time", new_times)
+
+                            submitted = st.form_submit_button("Confirm Reschedule")
+                            if submitted:
+                                update_appointment_status(
+                                    appointment_id=appt["appointmentID"],
+                                    new_status="Rescheduled",
+                                    new_date=new_date,
+                                    new_time=new_time
+                                )
+                                st.success("✅ Rescheduled successfully!")
+                                st.rerun()
+                        else:
+                            st.warning("No available slots to reschedule.")
+                cols[4].write("—")  # Hide Cancel button
+            else:
+                if cols[3].button("🔁 Reschedule", key=f"reschedule_{idx}"):
+                    with st.form(f"reschedule_form_active_{idx}"):
+                        st.subheader(f"Reschedule Appointment")
+
                         schedule = get_pharmacist_schedule()
                         booked = [(a['Date'], a['Time']) for a in get_appointments()]
                         available_slots = [
@@ -169,16 +198,14 @@ elif choice == "My Appointments":
                         else:
                             st.warning("No available slots to reschedule.")
 
-                cols[4].write("—")  # Hide cancel button
-            else:
-                cols[3].button("🔁 Reschedule", key=f"reschedule_{idx}"):
-                cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
+                if cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
                     update_appointment_status(
                         appointment_id=appt["appointmentID"],
                         new_status="Cancelled"
                     )
                     st.success("❌ Appointment cancelled.")
                     st.rerun()
+
 
 # --------------------------------------------
 # Manage Schedule
