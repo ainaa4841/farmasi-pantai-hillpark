@@ -118,55 +118,57 @@ elif choice == "Book Appointment":
 
 # --------------------------------------------
 # Manage Schedule
-elif choice == "Manage Schedule":
-    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
+elif choice == "My Appointments":
+    st.subheader("📋 My Appointments")
 
     appointments = get_appointments()
-    customers = {str(c["customerID"]): c for c in get_all_customers()}
+    my_appointments = [
+        appt for appt in appointments
+        if str(appt.get('customerID')) == str(st.session_state.customer_id)
+    ]
 
-    if not appointments:
+    if not my_appointments:
         st.info("No appointments found.")
     else:
-        st.markdown("### Booked Appointments")
+        st.markdown("### Your Booked Slots")
+        for idx, appt in enumerate(my_appointments):
+            cols = st.columns([2, 2, 2, 2, 2])
+            cols[0].write(f"📅 **{appt['Date']}**")
+            cols[1].write(f"🕒 **{appt['Time']}**")
+            cols[2].write(f"📌 **{appt['Status']}**")
 
-        for idx, appt in enumerate(appointments):
-            cust = customers.get(str(appt["customerID"]), {})
-            full_name = cust.get("Full Name", "Unknown")
-            email = cust.get("Email", "N/A")
-            phone = cust.get("Phone Number", "N/A")
+            if cols[3].button("Reschedule", key=f"reschedule_{idx}"):
+                with st.form(f"reschedule_form_{idx}"):
+                    st.subheader(f"Reschedule Slot for {appt['Date']} {appt['Time']}")
+                    schedule = get_pharmacist_schedule()
+                    booked = [(a['Date'], a['Time']) for a in get_appointments()]
+                    available_slots = [
+                        s for s in schedule if (s['Date'], s['Time']) not in booked
+                    ]
 
-            # Wrap appointment row in a bordered div
-            st.markdown(f"""
-                <div style="
-                    border: 1px solid #ccc;
-                    border-radius: 3px;
-                    padding: 1px;
-                    margin-bottom: 10px;
-                    background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
+                    dates = sorted(list(set([s['Date'] for s in available_slots])))
+                    new_date = st.selectbox("New Date", dates)
+                    new_times = [s['Time'] for s in available_slots if s['Date'] == new_date]
+                    new_time = st.selectbox("New Time", new_times)
 
-            # Columns inside bordered box
-            cols = st.columns([2, 3, 3, 2, 2, 2])
-            cols[0].write(f"🆔 **{appt['appointmentID']}**")
-            cols[1].write(f"👤 **{full_name}**")
-            cols[2].write(f"📧 {email}<br>📱 {phone}", unsafe_allow_html=True)
-            cols[3].write(f"📅 {appt['Date']}")
-            cols[4].write(f"🕒 {appt['Time']}")
+                    submitted = st.form_submit_button("Confirm Reschedule")
+                    if submitted:
+                        update_appointment_status(
+                            appointment_id=appt["appointmentID"],
+                            new_status="Rescheduled",
+                            new_date=new_date,
+                            new_time=new_time
+                        )
+                        st.success("Rescheduled successfully!")
+                        st.rerun()
 
-            new_status = cols[5].selectbox(
-                "Status",
-                ["Pending Confirmation", "Confirmed", "Cancelled"],
-                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
-                key=f"status_{idx}"
-            )
-
-            if st.button("Update", key=f"update_{idx}"):
-                update_appointment_status(appt["appointmentID"], new_status)
-                st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
+            if cols[4].button("Cancel", key=f"cancel_{idx}"):
+                update_appointment_status(
+                    appointment_id=appt["appointmentID"],
+                    new_status="Cancelled"
+                )
+                st.success("Appointment cancelled.")
                 st.rerun()
-
-            # End of bordered div
-            st.markdown("</div>", unsafe_allow_html=True)
 
 
 # --------------------------------------------
