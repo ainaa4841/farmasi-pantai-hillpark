@@ -184,51 +184,78 @@ elif choice == "Manage Schedule":
     else:
         st.markdown("### Booked Appointments")
 
+        # Basic HTML table with borders
+        table_html = """
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+            }
+            th, td {
+                border: 1px solid #ccc;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #f0f0f0;
+            }
+        </style>
+        <table>
+            <tr>
+                <th>Appointment ID</th>
+                <th>Customer Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        """
+
         for idx, appt in enumerate(appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
 
-            # Wrap appointment row in a bordered div
-            st.markdown(f"""
-                <div style="
-                    border: 1px solid #ccc;
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 10px;
-                    background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
-
-            # Columns inside bordered box
-            cols = st.columns([2, 3, 3, 2, 2, 2])
-            cols[0].write(f"🆔 **{appt['appointmentID']}**")
-            cols[1].write(f"👤 **{full_name}**")
-            cols[2].write(f"📧 {email}<br>📱 {phone}", unsafe_allow_html=True)
-            cols[3].write(f"📅 {appt['Date']}")
-            cols[4].write(f"🕒 {appt['Time']}")
-
-            new_status = cols[5].selectbox(
-                "Status",
+            status_select = st.selectbox(
+                f"Status for {appt['appointmentID']}",
                 ["Pending Confirmation", "Confirmed", "Cancelled"],
                 index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
                 key=f"status_{idx}"
             )
 
-            if st.button("Update", key=f"update_{idx}"):
-                update_appointment_status(appt["appointmentID"], new_status)
-                st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
+            update_btn = st.button("Update", key=f"update_{idx}")
+            if update_btn:
+                update_appointment_status(appt["appointmentID"], status_select)
+                st.success(f"Updated appointment {appt['appointmentID']} to {status_select}")
                 st.rerun()
 
-            # End of bordered div
-            st.markdown("</div>", unsafe_allow_html=True)
+            table_html += f"""
+                <tr>
+                    <td>{appt['appointmentID']}</td>
+                    <td>{full_name}</td>
+                    <td>{email}</td>
+                    <td>{phone}</td>
+                    <td>{appt['Date']}</td>
+                    <td>{appt['Time']}</td>
+                    <td>{appt['Status']}</td>
+                    <td>Status control above</td>
+                </tr>
+            """
+
+        table_html += "</table>"
+        st.markdown(table_html, unsafe_allow_html=True)
+
 
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
     st.subheader("➕ Add New Slot")
     slot_date = st.date_input("Available Date")
-    slot_time = st.selectbox("Available Time", ["9:00AM-10:00AM", "10:00AM-11:00AM", "11:00AM-12:00PM","2:00PM-3:00PM", "3:00PM-4:00PM", "4:00PM-5:00PM"])
+    slot_time = st.selectbox("Available Time", ["8:00AM-9:00AM","9:00AM-10:00AM", "10:00AM-11:00AM", "11:00AM-12:00PM","2:00PM-3:00PM", "3:00PM-4:00PM", "4:00PM-5:00PM"])
     schedule = get_pharmacist_schedule()
     if st.button("Add Slot"):
         if any(s["Date"] == str(slot_date) and s["Time"] == slot_time for s in schedule):
