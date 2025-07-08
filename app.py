@@ -143,8 +143,9 @@ elif choice == "Manage Schedule":
             phone = cust.get("Phone Number", "N/A")
             referral_link = appt.get("appointmentReferralLetter", "")
 
-            st.markdown("</div>", unsafe_allow_html=True)
-
+            st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
             cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 2])
             cols[0].write(f"🆔 {appt['appointmentID']}")
             cols[1].write(f"👤 {full_name}")
@@ -164,6 +165,10 @@ elif choice == "Manage Schedule":
                 update_appointment_status(appt["appointmentID"], new_status)
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
+
+            st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -199,6 +204,9 @@ elif choice == "Manage Schedule":
                 phone = cust.get("Phone Number", "N/A")
                 referral_link = appt.get("appointmentReferralLetter", "")
 
+                st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+            """, unsafe_allow_html=True)
                 cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
                 cols[0].write(f"{appt['appointmentID']}")
                 cols[1].write(f"{full_name}")
