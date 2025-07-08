@@ -48,13 +48,15 @@ def get_appointments():
         })
     return appointments
 
+def update_schedule(date, time):
+    worksheet = spreadsheet.worksheet("Schedules")
+    worksheet.append_row([date, time])
+
 def get_pharmacist_schedule():
     worksheet = spreadsheet.worksheet("Schedules")
-    return worksheet.get_all_records()
+    records = worksheet.get_all_records()
+    return [{"Date": str(r["Date"]), "Time": str(r["Time"])} for r in records if r.get("Date") and r.get("Time")]
 
-def update_schedule():
-    worksheet = spreadsheet.worksheet("Schedules")
-    worksheet.append_row(["New Slot", "9:00AM", "Available"])
 
 def update_appointment_status(name, date, time, new_status, new_date=None, new_time=None):
     worksheet = spreadsheet.worksheet("Appointments")
@@ -81,6 +83,11 @@ def save_report(data):
     worksheet = spreadsheet.worksheet("Reports")
     report_id = generate_next_id("Reports", "reportID")
     worksheet.append_row([report_id] + data)
+
+def get_all_customers():
+    worksheet = spreadsheet.worksheet("Customers")
+    return worksheet.get_all_records()
+
 
 
 
