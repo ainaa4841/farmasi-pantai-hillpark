@@ -66,27 +66,48 @@ elif choice == "Login":
 
 elif choice == "Book Appointment":
     st.subheader("Book an Appointment")
-    name = st.text_input("Enter your name")
-    appointment_type = st.selectbox("Appointment Type", ["First Time", "Follow Up", "Special"])
-    date = st.date_input("Select Date")
-    time = st.selectbox("Select Time Slot", ["9:00AM", "11:00AM", "2:00PM", "4:00PM"])
-    uploaded_file = st.file_uploader("Upload Referral Letter")
 
-    if st.button("Book Appointment"):
-      if not name or not uploaded_file:
-        st.error("Please provide your name and upload a referral letter.")
-      else:
-        if not os.path.exists("uploads"):
-            os.makedirs("uploads")
+    # Load available pharmacist schedule
+    available_schedule = get_pharmacist_schedule()
+    available_dates = sorted(list(set([slot['Date'] for slot in available_schedule])))
 
-        file_path = f"uploads/{uploaded_file.name}"
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+    if not available_schedule:
+        st.warning("No available slots. Please try again later.")
+    else:
+        selected_date = st.selectbox("Select Date", available_dates)
+        available_times = [slot['Time'] for slot in available_schedule if slot['Date'] == selected_date]
+        selected_time = st.selectbox("Select Time Slot", available_times)
 
-        file_id = upload_to_drive(file_path)
-        save_file_metadata([name, uploaded_file.name, file_id])
-        save_appointment([name, appointment_type, str(date), time, "Pending Confirmation"])
-        st.success(f"Appointment booked for {name} on {date} at {time}. Status: Pending Confirmation.")
+        uploaded_file = st.file_uploader("Upload Referral Letter (PDF, Image, etc.)")
+
+        if st.button("Book Appointment"):
+            if not uploaded_file:
+                st.error("Please upload a referral letter.")
+            else:
+                if not os.path.exists("uploads"):
+                    os.makedirs("uploads")
+
+                file_path = f"uploads/{uploaded_file.name}"
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+
+                file_id = upload_to_drive(file_path)
+                file_link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
+
+                # Save file and appointment data
+                save_file_metadata([st.session_state.user_username, uploaded_file.name, file_id])
+                from google_sheets import update_customer_referral_letter
+                update_customer_referral_letter(st.session_state.user_username, file_link)
+
+                save_appointment([
+                    st.session_state.customer_id,
+                    selected_date,
+                    selected_time,
+                    "Pending Confirmation"
+                ])
+
+                st.success(f"Appointment booked on {selected_date} at {selected_time}. Status: Pending Confirmation.")
+
 
 
 elif choice == "My Appointments":
@@ -121,13 +142,57 @@ elif choice == "Pharmacist Dashboard":
     st.subheader("Pharmacist Dashboard (Coming Soon)")
 
 elif choice == "Manage Schedule":
-    st.subheader("Manage Pharmacist Schedule")
-    schedule = get_pharmacist_schedule()
-    for item in schedule:
-        st.write(item)
-    if st.button("Update Schedule"):
-        update_schedule()
-        st.success("Schedule updated successfully!")
+    st.subheader("Pharmacist: Manage Appointments & Availability")
+
+    # View all current booked appointments
+    st.markdown("### 📋 Current Booked Appointments")
+    appointments = get_appointments()
+    customers = {c['customerID']: c for c in get_all_customers()}  # You’ll need a new helper
+
+    if not appointments:
+        st.info("No appointments booked yet.")
+    else:
+        for idx, appt in enumerate(appointments):
+            cust = customers.get(str(appt['customerID']), {})
+            st.write(f"**Appointment ID:** {appt['appointmentID']}")
+            st.write(f"**Customer:** {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
+            st.write(f"**Date:** {appt['Date']} | **Time:** {appt['Time']}")
+            st.write(f"**Current Status:** {appt['Status']}")
+
+            # Dropdown to change status
+            new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"],
+                                      index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
+                                      key=f"status_{idx}")
+            if st.button("Update", key=f"update_{idx}"):
+                update_appointment_status(appt['appointmentID'], new_status)
+                st.success(f"Updated status for appointment {appt['appointmentID']} to {new_status}")
+                st.experimental_rerun()
+
+            st.markdown("---")
+
+    # Section to Add New Available Slots
+    st.markdown("### ➕ Add New Available Slot")
+    new_date = st.date_input("Available Date")
+    new_time = st.selectbox("Available Time", ["9:00AM", "11:00AM", "2:00PM", "4:00PM"])
+    existing_schedule = get_pharmacist_schedule()
+    is_overlap = any(slot["Date"] == str(new_date) and slot["Time"] == new_time for slot in existing_schedule)
+
+    if st.button("Add Slot"):
+        if is_overlap:
+            st.warning(f"Slot {new_date} at {new_time} already exists.")
+        else:
+            update_schedule(str(new_date), new_time)
+            st.success(f"Slot {new_date} at {new_time} added.")
+            st.experimental_rerun()
+
+    # Display current availability
+    st.markdown("### 📅 Pharmacist Availability")
+    if existing_schedule:
+        for slot in existing_schedule:
+            st.write(f"{slot['Date']} - {slot['Time']}")
+    else:
+        st.info("No available schedule slots found.")
+
 
 elif choice == "Logout":
     st.session_state.logged_in = False
