@@ -174,20 +174,42 @@ elif choice == "My Appointments":
 # --------------------------------------------
 # Manage Schedule
 elif choice == "Manage Schedule":
-    st.subheader("📌Pharmacist: Manage Appointments & Availability")
-    appointments = get_appointments()
-    customers = {str(c["customerID"]): c for c in get_all_customers()}  # ✅ FIX
+    st.subheader("📋 Pharmacist: Manage Appointments & Availability")
 
-    for idx, appt in enumerate(appointments):
-        cust = customers.get(str(appt["customerID"]), {})  # ✅ FIX
-        st.write(f"**Appointment ID:** {appt['appointmentID']}")
-        st.write(f"👤 Customer: {cust.get('Full Name', 'Unknown')} | Email: {cust.get('Email', 'N/A')} | Phone: {cust.get('Phone Number', 'N/A')}")
-        st.write(f"📅 Date: {appt['Date']} | 🕒 Time: {appt['Time']} | Status: {appt['Status']}")
-        new_status = st.selectbox("Update Status", ["Pending Confirmation", "Confirmed", "Cancelled"], key=f"status_{idx}")
-        if st.button("Update", key=f"update_{idx}"):
-            update_appointment_status(appt["appointmentID"], new_status)
-            st.success("Updated!")
-            st.rerun()
+    appointments = get_appointments()
+    customers = {str(c["customerID"]): c for c in get_all_customers()}
+
+    if not appointments:
+        st.info("No appointments found.")
+    else:
+        st.markdown("### Booked Appointments")
+        for idx, appt in enumerate(appointments):
+            cust = customers.get(str(appt["customerID"]), {})
+            full_name = cust.get("Full Name", "Unknown")
+            email = cust.get("Email", "N/A")
+            phone = cust.get("Phone Number", "N/A")
+
+            # Show appointment info in a row layout
+            cols = st.columns([2, 3, 3, 2, 3, 2])
+            cols[0].write(f"🆔 **{appt['appointmentID']}**")
+            cols[1].write(f"👤 **{full_name}**")
+            cols[2].write(f"📧 {email} / 📱 {phone}")
+            cols[3].write(f"📅 {appt['Date']}")
+            cols[4].write(f"🕒 {appt['Time']}")
+            
+            # Dropdown for status update
+            new_status = cols[5].selectbox(
+                "Status",
+                ["Pending Confirmation", "Confirmed", "Cancelled"],
+                index=["Pending Confirmation", "Confirmed", "Cancelled"].index(appt["Status"]),
+                key=f"status_{idx}"
+            )
+
+            # Confirm update button
+            if st.button("Update", key=f"update_{idx}"):
+                update_appointment_status(appt["appointmentID"], new_status)
+                st.success(f"✅ Appointment {appt['appointmentID']} updated to {new_status}")
+                st.rerun()
 
 # --------------------------------------------
 # Update Slot Availability
