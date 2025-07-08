@@ -220,13 +220,13 @@ elif choice == "Manage Schedule":
                 referral_link = appt.get("appointmentReferralLetter", "")
 
                 cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
-                cols[0].write(f"🆔 {appt['appointmentID']}")
-                cols[1].write(f"👤 {full_name}")
-                cols[2].write(f"📧 {email}\n📱 {phone}")
-                cols[3].write(f"📅 {appt['Date']}")
-                cols[4].write(f"🕒 {appt['Time']}")
-                cols[5].markdown(f"[📄 Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
-                cols[6].write(f"📌 {appt['Status']}")
+                cols[0].write(f" {appt['appointmentID']}")
+                cols[1].write(f" {full_name}")
+                cols[2].write(f" {email}\n {phone}")
+                cols[3].write(f" {appt['Date']}")
+                cols[4].write(f" {appt['Time']}")
+                cols[5].markdown(f"[ Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
+                cols[6].write(f" {appt['Status']}")
 
 
 # --------------------------------------------
