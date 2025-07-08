@@ -192,7 +192,7 @@ elif choice == "Manage Schedule":
 # --------------------------------------------
 # Update Slot Availability
 elif choice == "Update Slot Availability":
-    st.subheader("### ➕ Add New Slot")
+    st.subheader("➕ Add New Slot")
     slot_date = st.date_input("Available Date")
     slot_time = st.selectbox("Available Time", ["9:00AM-10:00AM", "10:00AM-11:00AM", "11:00AM-12:00PM","2:00PM-3:00PM", "3:00PM-4:00PM", "4:00PM-5:00PM"])
     schedule = get_pharmacist_schedule()
@@ -203,7 +203,7 @@ elif choice == "Update Slot Availability":
             update_schedule(str(slot_date), slot_time)
             st.success("Slot added!")
             st.rerun()
-            st.markdown("---")
+        st.markdown("---")
 
     # Calendar display
         st.markdown("### 📅 Available Slots")
