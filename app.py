@@ -112,7 +112,7 @@ elif choice == "Book Appointment":
                     st.session_state.customer_id,
                     selected_date,
                     selected_time,
-                    "Pending Confirmation"
+                    "Pending Confirmation",
                     file_link
                 ])
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
