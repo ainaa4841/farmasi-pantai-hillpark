@@ -1,14 +1,13 @@
 import streamlit as st
 from auth import register_user, login_user, check_email_exists, check_password_complexity, get_customer_id
 from google_sheets import (
-    save_customer, save_appointment, save_file_metadata,
+    save_customer, upload_to_drive, save_appointment,
     get_appointments, get_pharmacist_schedule,
     update_schedule, update_appointment_status,
-    get_all_customers, update_customer_referral_letter, save_report
+    get_all_customers,  save_report, get_all_reports
 )
 import os
 import pandas as pd
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 from collections import defaultdict
 
 st.set_page_config(page_title="Farmasi Pantai Hillpark", layout="wide")
@@ -33,7 +32,7 @@ if st.session_state.logged_in:
     if st.session_state.user_role == 'Customer':
         menu = ["Book Appointment", "My Appointments", "Logout"]
     elif st.session_state.user_role == 'Pharmacist':
-        menu = ["Manage Schedule", "Update Slot Availability", "Add Report", "Logout"]
+        menu = ["Manage Appointments", "Add Slot Availability","Available Slots", "Add Report", "Logout"]
 
 choice = st.sidebar.selectbox("Menu", menu)
 
@@ -97,23 +96,22 @@ elif choice == "Book Appointment":
             if not uploaded_file:
                 st.error("Please upload a referral letter.")
             else:
-                # Save file locally
                 if not os.path.exists("uploads"):
                     os.makedirs("uploads")
+
+                # Save the uploaded file locally
                 file_path = f"uploads/{uploaded_file.name}"
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-                file_link = f"uploads/{uploaded_file.name}"
-                save_file_metadata([st.session_state.user_username, uploaded_file.name, file_link])
-                update_customer_referral_letter(st.session_state.user_username, file_link)
-
+                # Save appointment with referral path
                 save_appointment([
                     st.session_state.customer_id,
                     selected_date,
                     selected_time,
                     "Pending Confirmation"
-                ], referral_path=file_link)
+                ], referral_path=file_path)
+
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 # --------------------------------------------
 # My Appointments
@@ -193,11 +191,10 @@ elif choice == "My Appointments":
                 row[1].write(f"{appt['Time']}")
                 row[2].write(f"{appt['Status']}")
 
-
 # --------------------------------------------
-# Manage Schedule
-elif choice == "Manage Schedule":
-    st.subheader("Pharmacist: Manage Appointments & Availability")
+# Manage Appointment
+elif choice == "Manage Appointments":
+    st.subheader("🗂️ Manage Appointments")
 
     appointments = get_appointments()
     customers = {str(c["customerID"]): c for c in get_all_customers()}
@@ -205,33 +202,56 @@ elif choice == "Manage Schedule":
     if not appointments:
         st.info("No appointments found.")
     else:
-        # Split appointments by status
-        active_appointments = [a for a in appointments if a["Status"] in ["Pending Confirmation", "Confirmed"]]
-        inactive_appointments = [a for a in appointments if a["Status"] in ["Cancelled", "Completed"]]
+        # 🔍 Filter options
+        customer_ids = sorted(set(str(a["customerID"]) for a in appointments))
+        statuses = ["All", "Pending Confirmation", "Confirmed", "Cancelled", "Completed"]
 
-        # ----------------------
-        # Section 1: Active Appointments
-        st.markdown("### 📋 Active Appointments (Pending / Confirmed)")
-        for idx, appt in enumerate(active_appointments):
+        selected_customer = st.selectbox("🔎 Filter by Customer ID", ["All"] + customer_ids)
+        selected_status = st.selectbox("📌 Filter by Status", statuses)
+
+        # Apply filters
+        filtered_appointments = appointments
+        if selected_customer != "All":
+            filtered_appointments = [a for a in filtered_appointments if str(a["customerID"]) == selected_customer]
+        if selected_status != "All":
+            filtered_appointments = [a for a in filtered_appointments if a["Status"] == selected_status]
+
+        st.markdown(f"### Showing {len(filtered_appointments)} appointments")
+
+        for idx, appt in enumerate(filtered_appointments):
             cust = customers.get(str(appt["customerID"]), {})
             full_name = cust.get("Full Name", "Unknown")
             email = cust.get("Email", "N/A")
             phone = cust.get("Phone Number", "N/A")
-            referral_link = appt.get("appointmentReferralLetter", "")
+            referral_path = appt.get("appointmentReferralLetter", "")
 
             st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+                <div style="border: 1px solid #ccc; padding: 0.1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
             """, unsafe_allow_html=True)
-            
-            cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 2])
-            cols[0].write(f"🆔 {appt['appointmentID']}")
-            cols[1].write(f"👤 {full_name}")
-            cols[2].write(f"📧 {email}\n\n📱 {phone}")
-            cols[3].write(f"📅 {appt['Date']}")
-            cols[4].write(f"🕒 {appt['Time']}")
-            cols[5].markdown(f"[📄 Letter]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
 
-            new_status = cols[6].selectbox(
+            cols = st.columns([1, 1, 2, 2, 1.5, 1.5, 2, 2])
+            cols[0].write(f"🆔 {appt['appointmentID']}")
+            cols[1].write(f"🧾 CID: {appt['customerID']}")
+            cols[2].write(f"👤 {full_name}")
+            cols[3].write(f"📧 {email}\n\n📱 {phone}")
+            cols[4].write(f"📅 {appt['Date']}")
+            cols[5].write(f"🕒 {appt['Time']}")
+
+            # 📄 Referral Letter
+            if referral_path and os.path.exists(referral_path):
+                with open(referral_path, "rb") as f:
+                    cols[6].download_button(
+                        label="📄 Download",
+                        data=f,
+                        file_name=os.path.basename(referral_path),
+                        mime="application/octet-stream",
+                        key=f"download_{idx}"
+                    )
+            else:
+                cols[6].write("—")
+
+            # ✅ Update status
+            new_status = cols[7].selectbox(
                 "Status",
                 ["Pending Confirmation", "Confirmed", "Cancelled", "Completed"],
                 index=["Pending Confirmation", "Confirmed", "Cancelled", "Completed"].index(appt["Status"]),
@@ -243,60 +263,12 @@ elif choice == "Manage Schedule":
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
 
-         
-
             st.markdown("</div>", unsafe_allow_html=True)
-
-
-        # --------------------
-        # Section 2: Past Appointments
-        past_appts = [appt for appt in appointments if appt["Status"] in ["Cancelled", "Completed"]]
-
-        if past_appts:
-            st.markdown("---")
-            st.markdown("### 📋 Past Appointments (Cancelled or Completed)")
-
-            # Build customer lookup to fetch name/email/phone
-            customers = {str(c["customerID"]): c for c in get_all_customers()}
-            
-
-            # Header
-            header = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
-            header[0].markdown("**🆔 ID**")
-            header[1].markdown("**👤 Name**")
-            header[2].markdown("**📧 Contact**")
-            header[3].markdown("**📅 Date**")
-            header[4].markdown("**🕒 Time**")
-            header[5].markdown("**📄 Referral Letter**")
-            header[6].markdown("**📌 Status**")
-            
-            for appt in past_appts:
-                cust = customers.get(str(appt["customerID"]), {})
-                full_name = cust.get("Full Name", "Unknown")
-                email = cust.get("Email", "N/A")
-                phone = cust.get("Phone Number", "N/A")
-                referral_link = appt.get("appointmentReferralLetter", "")
-
-                st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
-            """, unsafe_allow_html=True)
-                cols = st.columns([1, 2, 2, 1.5, 1.5, 2, 1.5])
-                cols[0].write(f"{appt['appointmentID']}")
-                cols[1].write(f"{full_name}")
-                cols[2].markdown(f"{email}<br>{phone}", unsafe_allow_html=True)
-                cols[3].write(f"{appt['Date']}")
-                cols[4].write(f"{appt['Time']}")
-                cols[5].markdown(f"[📄 Download]({referral_link})" if referral_link else "—", unsafe_allow_html=True)
-                cols[6].write(f"{appt['Status']}")
-                
-               
-
-
 
 
 # --------------------------------------------
 # Update Slot Availability
-elif choice == "Update Slot Availability":
+elif choice == "Add Slot Availability":
     st.subheader("➕ Add New Slot")
     slot_date = st.date_input("Available Date")
     slot_time = st.selectbox("Available Time", ["8:00AM-9:00AM","9:00AM-10:00AM", "10:00AM-11:00AM", "11:00AM-12:00PM","2:00PM-3:00PM", "3:00PM-4:00PM", "4:00PM-5:00PM"])
@@ -308,11 +280,11 @@ elif choice == "Update Slot Availability":
             update_schedule(str(slot_date), slot_time)
             st.success("Slot added!")
             st.rerun()
-        st.markdown("---")
 
-    # Calendar display
-    st.markdown("### 📌 Available Slots")
+elif choice == "Available Slots":
+    st.subheader("📌 Available Slots")
 
+    schedule = get_pharmacist_schedule()
     if not schedule:
         st.info("No slots available.")
     else:
@@ -332,13 +304,61 @@ elif choice == "Update Slot Availability":
 # --------------------------------------------
 # Add Report
 elif choice == "Add Report":
-    st.subheader("Add Appointment Report")
+    st.subheader("📝 Add Appointment Report")
+
+    customer_id = st.text_input("Customer ID")
     appt_id = st.text_input("Appointment ID")
     report_date = st.date_input("Report Date")
     content = st.text_area("Report Content")
+
     if st.button("Save Report"):
-        save_report([appt_id, str(report_date), content])
-        st.success("Report saved.")
+        if not all([customer_id, appt_id, content]):
+            st.error("Please complete all fields.")
+        else:
+            save_report([appt_id, str(report_date), content])
+            st.success("✅ Report saved.")
+
+    st.markdown("---")
+    st.subheader("📄 View Submitted Reports")
+
+    reports = get_all_reports()
+    appointments = get_appointments()
+
+    # Create a mapping of appointmentID to customerID
+    appt_to_customer = {str(a["appointmentID"]): str(a["customerID"]) for a in appointments}
+
+    # Attach customerID to each report
+    for rep in reports:
+        rep["customerID"] = appt_to_customer.get(str(rep["appointmentID"]), "Unknown")
+
+    # Filter Options
+    customer_ids = sorted(set(r["customerID"] for r in reports if r["customerID"] != "Unknown"))
+    appt_ids = sorted(set(r["appointmentID"] for r in reports))
+
+    selected_cust_id = st.selectbox("🔍 Filter by Customer ID", ["All"] + customer_ids)
+    selected_appt_id = st.selectbox("📎 Filter by Appointment ID", ["All"] + appt_ids)
+
+    # Apply filters
+    filtered_reports = reports
+    if selected_cust_id != "All":
+        filtered_reports = [r for r in filtered_reports if r["customerID"] == selected_cust_id]
+    if selected_appt_id != "All":
+        filtered_reports = [r for r in filtered_reports if r["appointmentID"] == selected_appt_id]
+
+    if not filtered_reports:
+        st.info("No matching reports found.")
+    else:
+        for rep in filtered_reports:
+            st.markdown(f"""
+                <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; background-color: #f8f8f8;">
+                    <strong>📋 Report ID:</strong> {rep['reportID']}<br>
+                    <strong>👤 Customer ID:</strong> {rep['customerID']}<br>
+                    <strong>📎 Appointment ID:</strong> {rep['appointmentID']}<br>
+                    <strong>📅 Date:</strong> {rep['reportDate']}<br>
+                    <strong>📝 Content:</strong><br>
+                    <div style="margin-left: 15px;">{rep['reportContent']}</div>
+                </div>
+            """, unsafe_allow_html=True)
 
 # --------------------------------------------
 # Logout
