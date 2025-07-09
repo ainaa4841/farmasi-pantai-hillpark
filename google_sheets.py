@@ -1,14 +1,20 @@
 import gspread
 from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
 import json
 import streamlit as st
 import os
+import mimetypes
+from googleapiclient.http import MediaFileUpload
+
 
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
 creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
 client = gspread.authorize(creds)
 spreadsheet = client.open_by_key(st.secrets["SPREADSHEET_ID"])
+FOLDER_ID = st.secrets["FOLDER_ID"]
+
 
 def generate_next_id(sheet, col_name):
     records = spreadsheet.worksheet(sheet).get_all_records()
@@ -36,13 +42,7 @@ def save_file_metadata(data):
     ws = spreadsheet.worksheet("Files")
     ws.append_row(data)
 
-def update_customer_referral_letter(username, link):
-    ws = spreadsheet.worksheet("Customers")
-    records = ws.get_all_records()
-    for idx, row in enumerate(records, start=2):
-        if row["customerUsername"] == username:
-            ws.update_acell(f"G{idx}", link)
-            break
+
 
 def get_appointments():
     ws = spreadsheet.worksheet("Appointments")
@@ -55,24 +55,37 @@ def update_schedule(date, time):
 def get_pharmacist_schedule():
     return spreadsheet.worksheet("Schedules").get_all_records()
 
-def update_appointment_status(appointment_id, new_status, new_date=None, new_time=None):
-    worksheet = spreadsheet.worksheet("Appointments")
-    records = worksheet.get_all_records()
-    for idx, record in enumerate(records, start=2):  # Row 2 = data starts
-        if str(record["appointmentID"]) == str(appointment_id):
-            if new_status == "Cancelled":
-                worksheet.update_acell(f"E{idx}", "Cancelled")
-                restore_schedule_slot(record["Date"], record["Time"])
-            elif new_status == "Rescheduled":
-                old_date, old_time = record["Date"], record["Time"]
-                worksheet.update_acell(f"C{idx}", new_date)
-                worksheet.update_acell(f"D{idx}", new_time)
-                worksheet.update_acell(f"E{idx}", "Pending Confirmation")
-                restore_schedule_slot(old_date, old_time)
-                remove_schedule_slot(new_date, new_time)
-            else:
-                worksheet.update_acell(f"E{idx}", new_status)
+def update_appointment_status(appointment_id, new_status=None, new_date=None, new_time=None):
+    import gspread
+    from google.oauth2 import service_account
+    import streamlit as st
+
+    creds = service_account.Credentials.from_service_account_info(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(st.secrets["SPREADSHEET_ID"]).worksheet("Appointments")
+
+    headers = sheet.row_values(1)
+    records = sheet.get_all_records()
+
+    for idx, row in enumerate(records):
+        if str(row["appointmentID"]) == str(appointment_id):
+            row_number = idx + 2  # Account for header row
+
+            if new_status:
+                col_index = headers.index("Status") + 1
+                sheet.update_cell(row_number, col_index, new_status)
+
+            if new_date:
+                col_index = headers.index("Date") + 1
+                sheet.update_cell(row_number, col_index, new_date)
+
+            if new_time:
+                col_index = headers.index("Time") + 1
+                sheet.update_cell(row_number, col_index, new_time)
+
             break
+
+
 
 
 def get_all_customers():
@@ -97,6 +110,21 @@ def remove_schedule_slot(date, time):
             return
     print(f"[DEBUG] Slot not found for deletion: {date} - {time}")
 
+def upload_to_drive(file_path):
+    drive_service = build("drive", "v3", credentials=creds)
+    file_metadata = {
+        "name": os.path.basename(file_path),
+        "parents": [FOLDER_ID]
+    }
+    mimetype, _ = mimetypes.guess_type(file_path)
+    media = MediaFileUpload(file_path, mimetype=mimetype)
+    uploaded_file = drive_service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields="id"
+    ).execute()
+    return uploaded_file.get("id")
+
 
 def restore_schedule_slot(date, time):
     worksheet = spreadsheet.worksheet("Schedules")
@@ -107,3 +135,8 @@ def restore_schedule_slot(date, time):
         if rec_date == str(date).strip().lower() and rec_time == str(time).strip().lower():
             return  # already exists
     worksheet.append_row([date, time])
+
+def get_all_reports():
+    ws = spreadsheet.worksheet("Reports")
+    return ws.get_all_records()
+
