@@ -1,17 +1,6 @@
-import json
 import streamlit as st
-from google.oauth2.service_account import Credentials
-import gspread
 import re
-
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-
-# Load the JSON string from Streamlit secrets and parse it
-service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-
-creds = Credentials.from_service_account_info(service_account_info, scopes=scope)
-client = gspread.authorize(creds)
-spreadsheet = client.open_by_key(st.secrets["SPREADSHEET_ID"])
+from sheets_client import spreadsheet
 
 def register_user(username, password, role, email):
     worksheet = spreadsheet.worksheet("Users")
