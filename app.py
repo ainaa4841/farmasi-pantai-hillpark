@@ -57,26 +57,27 @@ if choice == "Register":
 
 # --------------------------------------------
 # Login
+# --------------------------------------------
+# Login
 if choice == "Login":
     st.subheader("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        email = login_user(username, password)
-        if email:
+        role, username_returned, email = login_user(username, password)
+        if role:
             st.session_state.logged_in = True
-            st.session_state.user_username = username
+            st.session_state.user_username = username_returned
             st.session_state.user_email = email
-            if username in ["pharma01"]:  # Example username for Pharmacist
-                st.session_state.user_role = 'Pharmacist'
-            else:
-                st.session_state.user_role = 'Customer'
-                st.session_state.customer_id = get_customer_id(username)
+            st.session_state.user_role = role
+
+            if role == "Customer":
+                st.session_state.customer_id = get_customer_id(username_returned)
+
             st.rerun()
         else:
             st.error("Invalid credentials!")
-
 # --------------------------------------------
 # Book Appointment
 elif choice == "Book Appointment":
