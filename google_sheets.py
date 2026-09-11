@@ -1,9 +1,10 @@
 import os
+import io
 import mimetypes
 import json
 import streamlit as st
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 from sheets_client import spreadsheet, creds
 
@@ -113,6 +114,23 @@ def upload_to_drive(file_path):
     ).execute()
     return uploaded_file.get("id")
 
+def download_file_from_drive(file_id):
+    """Fetch a file's bytes and name from Google Drive by file ID.
+    Returns (bytes, file_name)."""
+    drive_service = build("drive", "v3", credentials=creds)
+    file_metadata = drive_service.files().get(fileId=file_id, fields="name").execute()
+    file_name = file_metadata.get("name", file_id)
+
+    request = drive_service.files().get_media(fileId=file_id)
+    buffer = io.BytesIO()
+    downloader = MediaIoBaseDownload(buffer, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+
+    return buffer.getvalue(), file_name
+
+
 def save_file_metadata(data):
     ws = spreadsheet.worksheet("Files")
     ws.append_row(data)
@@ -129,4 +147,3 @@ def get_all_reports():
     sheet = spreadsheet.worksheet("Report")  # adjust sheet name as needed
     data = sheet.get_all_records()  # This gives list of dicts based on headers row
     return data
-
