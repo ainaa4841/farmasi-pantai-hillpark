@@ -22,18 +22,22 @@ def login_user(username, password):
 
         # Check Pharmacist sheet
         pharmacist_ws = spreadsheet.worksheet("Pharmacist")
-        for pharm in pharmacist_ws.get_all_records():
+        pharmacist_records = pharmacist_ws.get_all_records()
+        for pharm in pharmacist_records:
             if pharm.get("pharmacistUsername") == username and pharm.get("pharmacistPassword") == password:
                 return "Pharmacist", pharm["pharmacistUsername"], pharm["pharmacistEmail"]
 
-        # No match found — credentials genuinely didn't match any row
+        # TEMPORARY DEBUG: no match was found — show exactly what the sheet
+        # actually contains so we can see column-name or value mismatches.
+        # Remove this whole block once login is working.
+        st.warning("⚠️ Debug: no matching row found. Here's what the Pharmacist sheet actually returned:")
+        st.json(pharmacist_records)
+        st.write(f"You typed username=`{username}` password=`{password}`")
+
+        # No match found
         return None, None, None
 
     except Exception as e:
-        # TEMPORARY: surface the real error in the UI so we can see what's
-        # actually failing (missing secrets, sheet access, wrong tab/column
-        # names, etc.) instead of it looking like "wrong password".
-        # Remove this st.error line once the underlying issue is fixed.
         st.error(f"⚠️ Login backend error (debug): {e}")
         print(f"Login error: {e}")
         return None, None, None
