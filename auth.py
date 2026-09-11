@@ -26,10 +26,15 @@ def login_user(username, password):
             if pharm.get("pharmacistUsername") == username and pharm.get("pharmacistPassword") == password:
                 return "Pharmacist", pharm["pharmacistUsername"], pharm["pharmacistEmail"]
 
-        # No match found
+        # No match found — credentials genuinely didn't match any row
         return None, None, None
 
     except Exception as e:
+        # TEMPORARY: surface the real error in the UI so we can see what's
+        # actually failing (missing secrets, sheet access, wrong tab/column
+        # names, etc.) instead of it looking like "wrong password".
+        # Remove this st.error line once the underlying issue is fixed.
+        st.error(f"⚠️ Login backend error (debug): {e}")
         print(f"Login error: {e}")
         return None, None, None
 
