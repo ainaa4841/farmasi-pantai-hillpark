@@ -5,7 +5,8 @@ from google_sheets import (
     get_appointments, get_pharmacist_schedule,
     update_schedule, update_appointment_status,
     get_all_customers, save_report, get_all_reports,
-    restore_schedule_slot, remove_schedule_slot
+    restore_schedule_slot, remove_schedule_slot,
+    download_file_from_drive
 )
 import os
 import pandas as pd
@@ -13,10 +14,27 @@ import pandas as pd
 st.set_page_config(page_title="Farmasi Pantai Hillpark", layout="wide")
 
 # Load CSS
-with open("css/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+if os.path.exists("style.css"):
+    with open("style.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-st.title("Farmasi Pantai Hillpark Appointment System")
+st.markdown("""
+<div class="hero-banner">
+    <span class="hero-tag">Farmasi Pantai Hillpark</span>
+    <h1>Pharmacy Appointment System</h1>
+    <p>Book consultations, manage prescriptions, and track your appointments — all in one place.</p>
+</div>
+""", unsafe_allow_html=True)
+
+def status_class(status):
+    """Map an appointmentStatus value to the matching CSS class suffix."""
+    mapping = {
+        "Pending Confirmation": "pending",
+        "Confirmed": "confirmed",
+        "Cancelled": "cancelled",
+        "Completed": "completed",
+    }
+    return mapping.get(status, "pending")
 
 # Session defaults
 if 'logged_in' not in st.session_state:
@@ -27,7 +45,7 @@ if 'logged_in' not in st.session_state:
 
 menu = ["Login", "Register"]
 if st.session_state.logged_in:
-    if st.session_state.user_username in ["pharma01"]:  
+    if st.session_state.get("user_role") == "Pharmacist":
         menu = ["Manage Appointments", "Add Slot Availability","Available Slots", "Add Report", "Logout"]
     else:
         menu = ["Book Appointment", "My Appointments", "Logout"]
@@ -63,16 +81,16 @@ if choice == "Login":
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        email = login_user(username, password)
-        if email:
+        role, matched_username, email = login_user(username, password)
+        if role:
             st.session_state.logged_in = True
-            st.session_state.user_username = username
+            st.session_state.user_username = matched_username
             st.session_state.user_email = email
-            if username in ["pharma01"]:  # Example username for Pharmacist
+            if role == "Pharmacist":
                 st.session_state.user_role = 'Pharmacist'
             else:
                 st.session_state.user_role = 'Customer'
-                st.session_state.customer_id = get_customer_id(username)
+                st.session_state.customer_id = get_customer_id(matched_username)
             st.rerun()
         else:
             st.error("Invalid credentials!")
@@ -97,18 +115,24 @@ elif choice == "Book Appointment":
                 if not os.path.exists("uploads"):
                     os.makedirs("uploads")
 
-                # Save the uploaded file locally
+                # Save the uploaded file locally (temporary — Streamlit Cloud's
+                # local disk is wiped on restart/redeploy, so this is just a
+                # staging step before uploading to Drive for real persistence).
                 file_path = f"uploads/{uploaded_file.name}"
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-                # Save appointment with referral path
+                # Upload to Google Drive so the referral letter survives restarts,
+                # and store the returned Drive file ID (not the local path).
+                drive_file_id = upload_to_drive(file_path)
+
+                # Save appointment with the Drive file ID as the referral reference
                 save_appointment([
                     st.session_state.customer_id,
                     selected_date,
                     selected_time,
                     "Pending Confirmation"
-                ], referral_path=file_path)
+                ], referral_path=drive_file_id)
 
                 st.success(f"Appointment booked on {selected_date} at {selected_time}.")
 # --------------------------------------------
@@ -135,11 +159,11 @@ elif choice == "My Appointments":
             cols = st.columns([2, 2, 2, 2, 2])
             cols[0].write(f"📅 **{appt['appointmentDate']}**")
             cols[1].write(f"🕒 **{appt['appointmentTime']}**")
-            cols[2].write(f"📌 **{appt['appointmentStatus']}**")
+            cols[2].markdown(f"<span class='status-pill {status_class(appt['appointmentStatus'])}'>{appt['appointmentStatus']}</span>", unsafe_allow_html=True)
 
             # RESCHEDULE BUTTON
-            if cols[3].button("Reschedule", key=f"reschedule_{idx}"):
-                with st.form(f"reschedule_form_{idx}"):
+            if cols[3].button("Reschedule", key=f"reschedule_{appt['appointmentID']}"):
+                with st.form(f"reschedule_form_{appt['appointmentID']}"):
                     st.subheader(f"Reschedule Slot for {appt['appointmentDate']} {appt['appointmentTime']}")
                     schedule = get_pharmacist_schedule()
                     booked = [(a['appointmentDate'], a['appointmentTime']) for a in get_appointments()]
@@ -164,7 +188,7 @@ elif choice == "My Appointments":
                         st.rerun()
 
             # CANCEL BUTTON
-            if cols[4].button("❌ Cancel", key=f"cancel_{idx}"):
+            if cols[4].button("❌ Cancel", key=f"cancel_{appt['appointmentID']}"):
                 update_appointment_status(
                     appointment_id=appt["appointmentID"],
                     new_status="Cancelled"
@@ -200,6 +224,16 @@ elif choice == "Manage Appointments":
     if not appointments:
         st.info("No appointments found.")
     else:
+        pending_count = sum(1 for a in appointments if a["appointmentStatus"] == "Pending Confirmation")
+        confirmed_count = sum(1 for a in appointments if a["appointmentStatus"] == "Confirmed")
+        st.markdown(f"""
+        <div class="info-strip">
+            <div class="info-chip"><b>{len(appointments)}</b> total appointments</div>
+            <div class="info-chip"><b>{pending_count}</b> pending confirmation</div>
+            <div class="info-chip"><b>{confirmed_count}</b> confirmed</div>
+        </div>
+        """, unsafe_allow_html=True)
+
         # 🔍 Filter options
         customer_ids = sorted(set(str(a["customerID"]) for a in appointments))
         statuses = ["All", "Pending Confirmation", "Confirmed", "Cancelled", "Completed"]
@@ -224,7 +258,7 @@ elif choice == "Manage Appointments":
             referral_path = appt.get("appointmentReferralLetter", "")
 
             st.markdown(f"""
-                <div style="border: 1px solid #ccc; padding: 0.1px; border-radius: 6px; margin-bottom: 10px; background-color: #f9f9f9;">
+                <div class="appt-card status-{status_class(appt['appointmentStatus'])}">
             """, unsafe_allow_html=True)
 
             cols = st.columns([1, 1, 2, 2, 1.5, 1.5, 2, 2])
@@ -235,28 +269,52 @@ elif choice == "Manage Appointments":
             cols[4].write(f"📅 {appt['appointmentDate']}")
             cols[5].write(f"🕒 {appt['appointmentTime']}")
 
-            # 📄 Referral Letter
-            if referral_path and os.path.exists(referral_path):
-                with open(referral_path, "rb") as f:
-                    cols[6].download_button(
-                        label="📄 Download",
-                        data=f,
-                        file_name=os.path.basename(referral_path),
-                        mime="application/octet-stream",
-                        key=f"download_{idx}"
-                    )
+            # 📄 Referral Letter — referral_path now stores a Google Drive file ID
+            if referral_path:
+                if referral_path.startswith("uploads/") or referral_path.startswith("/"):
+                    # Legacy rows saved before the Drive-upload fix — the local
+                    # file likely no longer exists after a redeploy.
+                    if os.path.exists(referral_path):
+                        with open(referral_path, "rb") as f:
+                            cols[6].download_button(
+                                label="📄 Download",
+                                data=f,
+                                file_name=os.path.basename(referral_path),
+                                mime="application/octet-stream",
+                                key=f"download_{appt['appointmentID']}"
+                            )
+                    else:
+                        cols[6].write("File no longer available")
+                else:
+                    try:
+                        file_bytes, file_name = download_file_from_drive(referral_path)
+                        cols[6].download_button(
+                            label="📄 Download",
+                            data=file_bytes,
+                            file_name=file_name,
+                            mime="application/octet-stream",
+                            key=f"download_{appt['appointmentID']}"
+                        )
+                    except Exception:
+                        cols[6].write("Unable to load file")
             else:
                 cols[6].write("—")
 
             # ✅ Update status
+            # Key is tied to the appointment's ID AND its current status, so switching
+            # filters (which changes row position/idx) can never show a leftover
+            # selection from a different appointment that happened to share the old
+            # positional key. If the status changes elsewhere (e.g. after Update),
+            # the key changes too, forcing the widget to re-read the fresh value.
+            status_options = ["Pending Confirmation", "Confirmed", "Cancelled", "Completed"]
             new_status = cols[7].selectbox(
                 "appointmentStatus",
-                ["Pending Confirmation", "Confirmed", "Cancelled", "Completed"],
-                index=["Pending Confirmation", "Confirmed", "Cancelled", "Completed"].index(appt["appointmentStatus"]),
-                key=f"status_{idx}"
+                status_options,
+                index=status_options.index(appt["appointmentStatus"]),
+                key=f"status_{appt['appointmentID']}_{appt['appointmentStatus']}"
             )
 
-            if st.button("Update", key=f"update_{idx}"):
+            if st.button("Update", key=f"update_{appt['appointmentID']}"):
                 update_appointment_status(appt["appointmentID"], new_status)
                 st.success(f"✅ Appointment {appt['appointmentID']} updated.")
                 st.rerun()
@@ -292,7 +350,7 @@ elif choice == "Available Slots":
             cols = st.columns([3, 3, 1])
             cols[0].write(f"📅 Date: **{row['availableDate']}**")
             cols[1].write(f"🕒 Time: **{row['availableTimeslot']}**")
-            if cols[2].button("❌ Delete", key=f"delete_slot_{idx}"):
+            if cols[2].button("❌ Delete", key=f"delete_slot_{row['availableDate']}_{row['availableTimeslot']}"):
                 from google_sheets import remove_schedule_slot
                 remove_schedule_slot(row['availableDate'], row['availableTimeslot'])
                 st.success(f"Slot on {row['availableDate']} at {row['availableTimeslot']} deleted.")
